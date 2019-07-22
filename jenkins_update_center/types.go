@@ -19,10 +19,10 @@ type SigningInfoT struct {
 }
 
 type JSONSignatureComponents struct {
-	digest1 []byte
+	digest1    []byte
 	signature1 []byte
 
-	digest512 []byte
+	digest512    []byte
 	signature512 []byte
 }
 
@@ -37,7 +37,6 @@ func (sc JSONSignatureComponents) GetSignature512() string {
 func (sc JSONSignatureComponents) GetDigest1() string {
 	return hex.EncodeToString(sc.digest1)
 }
-
 
 func (sc JSONSignatureComponents) GetSignature1() string {
 	return base64.StdEncoding.EncodeToString(sc.signature1)
@@ -59,19 +58,19 @@ type JenkinsUCJSONT struct {
 	//isRemoteSource bool // true - URL; false - file
 }
 
-type SyncedByteBuffer struct {
-	mu sync.RWMutex
-	data bytes.Buffer
-}
-
-func (sbb *SyncedByteBuffer) Reset() {
-	sbb.mu.Lock()
-	defer func() {
-		sbb.mu.Unlock()
-	}()
-
-	sbb.data.Reset()
-}
+//type SyncedByteBuffer struct {
+//	mu sync.RWMutex
+//	data bytes.Buffer
+//}
+//
+//func (sbb *SyncedByteBuffer) Reset() {
+//	sbb.mu.Lock()
+//	defer func() {
+//		sbb.mu.Unlock()
+//	}()
+//
+//	sbb.data.Reset()
+//}
 
 type UpdateJSONT struct {
 	mu sync.RWMutex

@@ -6,7 +6,33 @@ import (
 	"encoding/json"
 	"fmt"
 	"jenkins-resigner-service/jenkins_update_center/json_schema"
+	"strings"
 )
+
+func extractJSONDocument(s string) (string, error) {
+	idxFrom := strings.Index(s, `{`)
+	idxTo := strings.LastIndex(s, `}`)
+
+	if idxFrom == -1 || idxTo == -1 {
+		return "", fmt.Errorf("cannot find a valid JSON document in the provided string")
+	}
+
+	return s[idxFrom : idxTo+1], nil
+
+	//sLen := len(s)
+
+	//prefixLen := len(wrappedJSONPrefix)
+	//postfixLen := len(wrappedJSONPostfix)
+	//if s[:prefixLen] != wrappedJSONPrefix {
+	//	return "", fmt.Errorf("given JSON-wrapped string does not begin with '%s' prefix", wrappedJSONPrefix)
+	//}
+	//
+	//if s[sLen-postfixLen:] != wrappedJSONPostfix {
+	//	return "", fmt.Errorf("given JSON-wrapped string does not end with '%s' postfix", wrappedJSONPostfix)
+	//}
+
+	//return s[prefixLen : sLen-postfixLen], nil
+}
 
 func (uj *UpdateJSONT) GetCertificates() ([]x509.Certificate, error) {
 	var (
@@ -41,7 +67,6 @@ func (uj *UpdateJSONT) GetCertificates() ([]x509.Certificate, error) {
 
 	return certs, nil
 }
-
 
 func (uj *UpdateJSONT) GetUnsignedJSON() ([]byte, error) {
 	var insecureUpdateJSON json_schema.InsecureUpdateJSON

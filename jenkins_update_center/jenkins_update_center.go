@@ -2,17 +2,19 @@ package jenkins_update_center
 
 import (
 	"bufio"
+	"bytes"
+
 	//"bytes"
 	"fmt"
-	json "github.com/gibson042/canonicaljson-go"
-	"github.com/tidwall/gjson"
-	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
 	"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"net/http"
 	"os"
-	"strings"
+
+	json "github.com/gibson042/canonicaljson-go"
+	"github.com/tidwall/gjson"
+	"go.uber.org/zap"
 	//"sync"
 )
 
@@ -23,7 +25,7 @@ var (
 	//PatchedJSONCache cachedEntryT
 )
 
-func Init (){
+func Init() {
 	log = zap.S()
 }
 
@@ -38,13 +40,17 @@ func ParseUpdateJSONLocation(jsonURL, jsonPath string) error {
 		if err != nil {
 			return err
 		}
-		defer func(){
+		defer func() {
 			err = f.Close()
 			log.Info("Error closing file: ", err)
 		}()
 
-		JenkinsUCJSON.Get = func() (r io.Reader, err error) {
-			err = downloadUpdateJSON(jsonURL)
+		JenkinsUCJSON.Get = func() (io.Reader, error) {
+			jsonFileData, err := downloadUpdateJSON(jsonURL)
+			if err != nil {
+				return nil, err
+			}
+			return jsonFileData, nil
 		}
 	} else if jsonURL != "" {
 		log.Info("update.json location: ", jsonURL)
@@ -54,18 +60,17 @@ func ParseUpdateJSONLocation(jsonURL, jsonPath string) error {
 		if err != nil {
 			return err
 		}
-		defer func(){
+		defer func() {
 			err = resp.Body.Close()
 			log.Info("Error closing http body: ", err)
 		}()
 
-		JenkinsUCJSON.Get = func() (r io.Reader, err error) {
-			origJSON.mu.RLock()
-			defer func() {
-				origJSON.mu.RUnlock()
-			}()
-			err = downloadUpdateJSON(jsonURL)
-			return bufio.NewReader(&origJSON.data), nil
+		JenkinsUCJSON.Get = func() (io.Reader, error) {
+			jsonFileData, err := downloadUpdateJSON(jsonURL)
+			if err != nil {
+				return nil, err
+			}
+			return jsonFileData, nil
 		}
 	} else {
 		//log.Debug("Using default update.json URL: ", Opts.UpdateJSONURL)
@@ -76,7 +81,7 @@ func ParseUpdateJSONLocation(jsonURL, jsonPath string) error {
 	return nil
 }
 
-func downloadUpdateJSON(downloadURL string) error {
+func downloadUpdateJSON(downloadURL string) (*bytes.Buffer, error) {
 	log.Infof("Downloading %s...", downloadURL)
 
 	origJSON.mu.Lock()
@@ -87,46 +92,21 @@ func downloadUpdateJSON(downloadURL string) error {
 	resp, err := http.Get(downloadURL)
 	if err != nil {
 		log.Errorf("Cannot GET %s: %s", downloadURL, err)
-		return err
+		return nil, err
 	}
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
-	origJSON.Reset()
+	jsonFileData := &bytes.Buffer{}
 	//n, err := io.Copy(bufio.NewWriter(&origJSON.data), )
-	n, err := origJSON.data.ReadFrom(resp.Body)
+	n, err := jsonFileData.ReadFrom(resp.Body)
 	if err != nil {
-		return fmt.Errorf("cannot save update.json content to buffer: %s", err)
+		return nil, fmt.Errorf("cannot save update.json content to buffer: %s", err)
 	}
 	log.Debugf("Successfully written %d bytes to buffer", n)
 
-	return nil
-}
-
-func extractJSONDocument(s string) (string, error) {
-	idxFrom := strings.Index(s, `{`)
-	idxTo := strings.LastIndex(s, `}`)
-
-	if idxFrom == -1 || idxTo == -1 {
-		return "", fmt.Errorf("cannot find a valid JSON document in the provided string")
-	}
-
-	return s[idxFrom : idxTo+1], nil
-
-	//sLen := len(s)
-
-	//prefixLen := len(wrappedJSONPrefix)
-	//postfixLen := len(wrappedJSONPostfix)
-	//if s[:prefixLen] != wrappedJSONPrefix {
-	//	return "", fmt.Errorf("given JSON-wrapped string does not begin with '%s' prefix", wrappedJSONPrefix)
-	//}
-	//
-	//if s[sLen-postfixLen:] != wrappedJSONPostfix {
-	//	return "", fmt.Errorf("given JSON-wrapped string does not end with '%s' postfix", wrappedJSONPostfix)
-	//}
-
-	//return s[prefixLen : sLen-postfixLen], nil
+	return jsonFileData, nil
 }
 
 func NewUpdateJSONFromURL(downloadURL string) (*UpdateJSONT, error) {
@@ -193,11 +173,6 @@ func NewUpdateJSONFromFile(path string) (*UpdateJSONT, error) {
 //	return nil
 //}
 
-
-
-
-
-
 //func (uj *UpdateJSONT) RefreshPatchedJSONCache() ([]byte, error) {
 //	PatchedJSONCache.mu.Lock()
 //	defer func(){
@@ -221,4 +196,3 @@ func NewUpdateJSONFromFile(path string) (*UpdateJSONT, error) {
 //
 //	return nil, nil
 //}
-
