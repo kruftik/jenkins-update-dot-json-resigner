@@ -8,13 +8,16 @@ import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
 	"go.uber.org/zap"
+	"jenkins-resigner-service/jenkins_update_center"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 const (
 	GitCommit = "0.0.1"
+	UpdateCenterDotJSON = "/update-center.json"
 )
 
 var (
@@ -28,6 +31,8 @@ var (
 		UpdateJSONPath string `long:"update-json-path"  env:"UPDATE_JSON_PATH"`
 		UpdateJSONURL  string `long:"update-json-url" env:"UPDATE_JSON_URL"`
 
+		UpdateJSONCacheTTL time.Duration `long:"cache-ttl" env:"UPDATE_JSON_CACHE_TTL" default:"30m"`
+
 		OriginDownloadURI string `long:"origin-download-uri" env:"ORIGIN_DOWNLOAD_URL" default:"http://updates.jenkins-ci.org/"`
 		NewDownloadURI    string `long:"new-download-uri" env:"NEW_DOWNLOAD_URI" required:"true"`
 
@@ -35,9 +40,11 @@ var (
 		SignCertificatePath string `long:"certificate-path" env:"SIGN_CERTIFICATE_PATH" description:"x509-certificate path" required:"true"`
 		SignKeyPath         string `long:"key-path" env:"SIGN_KEY_PATH" description:"private key path" required:"true"`
 		SignKeyPassword     string `long:"private-key-pass" env:"SIGN_KEY_PASSWORD"`
+
+		ServerPort			int `long:"listen-port" env:"LISTEN_PORT" default:"8282"`
 	}{}
 
-	updateJSON *UpdateJSONT
+	//updateJSON *UpdateJSONT
 )
 
 func main() {
@@ -57,7 +64,8 @@ func main() {
 		_ = logger.Sync()
 	}()
 
-	log = logger.Sugar()
+	zap.ReplaceGlobals(logger)
+	log = zap.S()
 
 	// Shutting down handling...
 	c := make(chan os.Signal)
@@ -69,6 +77,9 @@ func main() {
 	}()
 
 	log.Infof("Jenkins update.json ResignerService (v%s) starting up...", GitCommit)
+
+	jenkins_update_center.Init()
+
 
 	err = initialize()
 	if err != nil {
@@ -115,20 +126,24 @@ func main() {
 	}
 	log.Debug("JSON patched")
 
-	//bDigestsMatch, err = updateJSON.VerifySignature()
-	//if err != nil {
-	//	log.Error(err)
-	//	return
-	//}
-	//log.Infof("isDigestsMatch: %t", bDigestsMatch)
-	//err = updateJSON.PatchUpdateCenterURLs()
-	//destFile := Opts.UpdateJSONPath + "_new.json"
-	//if err = os.Remove(destFile); err == nil {
-	//	log.Debug("Removed old file: ", destFile)
-	//}
-	//err = updateJSON.SaveJSON(destFile, true)
-	//if err != nil {
-	//	log.Error(err)
-	//	return
-	//}
+	err = updateJSON.SignPatchedJSON()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	log.Debug("JSON resigned")
+
+	bDigestsMatch, err = updateJSON.VerifySignature()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	log.Infof("isDigestsMatch: %t", bDigestsMatch)
+
+	err = updateJSON.SaveJSONP("jsons/resigned.json", false)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
 }

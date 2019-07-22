@@ -8,20 +8,26 @@ import (
 //
 //"github.com/jessevdk/go-flags"
 //"go.uber.org/zap"
+	"jenkins-resigner-service/jenkins_update_center"
 )
 
 func initialize() error {
-	roots, cert, priv, err := parseSigningParameters()
+	err := jenkins_update_center.ParseSigningParameters(
+		Opts.SignCertificatePath,
+		Opts.SignCertificatePath,
+		Opts.SignKeyPath,
+		Opts.SignKeyPassword,
+	)
 	if err != nil {
 		return err
 	}
 
-	updateJSON, err = parseUpdateJSONLocation()
+	err = jenkins_update_center.ParseUpdateJSONLocation(Opts.UpdateJSONURL, Opts.UpdateJSONPath)
 	if err != nil {
 		return err
 	}
 
-	err = updateJSON.SetSigningData(roots, cert, priv)
+	err = initHTTP()
 	if err != nil {
 		return err
 	}

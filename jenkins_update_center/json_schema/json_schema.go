@@ -1,4 +1,4 @@
-package update_json_schema
+package json_schema
 
 type Core struct {
 	BuildDate string `json:"buildDate"`
