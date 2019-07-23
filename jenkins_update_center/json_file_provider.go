@@ -6,12 +6,35 @@ import (
 )
 
 type localFileJSONProvider struct {
-	src      string
+	path     string
 	metadata *JSONMetadataT
 }
 
-func (p *localFileJSONProvider) Init(src string) error {
-	p.src = src
+func ValidateLocalFileJSONProviderSource(src string) error {
+	f, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = f.Close()
+		log.Warn(err)
+	}()
+
+	return nil
+}
+
+func NewLocalFileJSONProvider(path string) (*localFileJSONProvider, error) {
+	p := &localFileJSONProvider{}
+
+	if err := p.init(path); err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func (p *localFileJSONProvider) init(src string) error {
+	p.path = src
 	p.metadata = &JSONMetadataT{}
 
 	return nil
@@ -22,7 +45,7 @@ func (p *localFileJSONProvider) GetContent() (*json_schema.UpdateJSON, error) {
 }
 
 func (p localFileJSONProvider) getFreshMetadata() (*JSONMetadataT, error) {
-	fi, err := os.Stat(p.src)
+	fi, err := os.Stat(p.path)
 	if err != nil {
 		return nil, err
 	}

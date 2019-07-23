@@ -55,6 +55,7 @@ type JenkinsUCJSONT struct {
 
 	cacheTTL time.Duration
 
+	js        JSONProvider
 	jsRaw     *cachedEntryT
 	jsPatched *cachedEntryT
 

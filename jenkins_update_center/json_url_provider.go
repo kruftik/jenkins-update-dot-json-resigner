@@ -1,45 +1,108 @@
 package jenkins_update_center
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"net/http"
 	"net/url"
 	"time"
 )
 
+var (
+	MaxIdleConns    = 10
+	IdleConnTimeout = 30 * time.Second
+	Timeout         = 30 * time.Second
+)
+
 type urlJSONProvider struct {
-	src      *url.URL
+	url      *url.URL
 	metadata *JSONMetadataT
 
 	hc *http.Client
 }
 
-func (p *urlJSONProvider) Init(src string) error {
+func ValidateURLJSONProviderSource(src string) error {
+	resp, err := http.Head(src)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = resp.Body.Close()
+		log.Warn(err)
+	}()
+
+	return nil
+}
+
+func NewURLJSONProvider(sURL string) (*urlJSONProvider, error) {
+	p := &urlJSONProvider{}
+
+	if err := p.init(sURL); err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func (p *urlJSONProvider) init(src string) error {
 	sURL, err := url.ParseRequestURI(src)
 	if err != nil {
 		return err
 	}
 
-	p.src = sURL
+	p.url = sURL
 	p.metadata = &JSONMetadataT{}
 
 	p.hc = &http.Client{
 		Transport: &http.Transport{
-			MaxIdleConns:    10,
-			IdleConnTimeout: 30 * time.Second,
+			MaxIdleConns:    MaxIdleConns,
+			IdleConnTimeout: IdleConnTimeout * time.Second,
 		},
-		Timeout: 30 * time.Second,
+		Timeout: Timeout,
 	}
 
 	return nil
 }
 
 func (p urlJSONProvider) GetContent() (*json_schema.UpdateJSON, error) {
-	return nil, nil
+	log.Infof("Downloading %s...", p.url)
+
+	resp, err := http.Get(p.url.String())
+	if err != nil {
+		return nil, fmt.Errorf("cannot GET %s: %s", p.url.String(), err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	jsonFileData := &bytes.Buffer{}
+
+	n, err := jsonFileData.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot save update.json content to buffer: %s", err)
+	}
+
+	log.Debugf("Successfully written %d bytes to buffer", n)
+
+	jsonStr, err := extractJSONDocument(jsonFileData.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("cannot strip json wrapping trailers: %s", err)
+	}
+
+	uj := &json_schema.UpdateJSON{}
+
+	err = json.Unmarshal(jsonStr, uj)
+	if err != nil {
+		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %s", err)
+	}
+
+	return uj, nil
 }
 
 func (p urlJSONProvider) getFreshMetadata() (*JSONMetadataT, error) {
-	resp, err := p.hc.Head(p.src.String())
+	resp, err := p.hc.Head(p.url.String())
 	if err != nil {
 		return nil, err
 	}

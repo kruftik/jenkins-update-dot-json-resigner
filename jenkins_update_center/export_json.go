@@ -1,12 +1,16 @@
 package jenkins_update_center
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 )
+
+func (juc *JenkinsUCJSONT) GetOriginalJSON() (*[]bytes.Buffer, error) {
+}
 
 func (uj *UpdateJSONT) SaveJSON(path string, savePatched bool) (err error) {
 	var (
@@ -36,7 +40,6 @@ func (uj *UpdateJSONT) SaveJSON(path string, savePatched bool) (err error) {
 	return nil
 }
 
-
 func (uj *UpdateJSONT) SaveJSONP(path string, savePatched bool) (err error) {
 	var (
 		jsonData []byte
@@ -58,7 +61,7 @@ func (uj *UpdateJSONT) SaveJSONP(path string, savePatched bool) (err error) {
 	jsonp := []byte(wrappedJSONPrefix + "\n")
 
 	jsonp = append(jsonp, jsonData...)
-	jsonp = append(jsonp, []byte("\n" + wrappedJSONPostfix)...)
+	jsonp = append(jsonp, []byte("\n"+wrappedJSONPostfix)...)
 
 	err = ioutil.WriteFile(path, jsonp, os.ModePerm)
 	if err != nil {

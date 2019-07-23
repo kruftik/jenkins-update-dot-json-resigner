@@ -11,10 +11,10 @@ type JSONMetadataT struct {
 }
 
 type JSONProvider interface {
-	Init(json_schema.UpdateJSON, error) error
+	init(string) error
 
-	GetContent() (json_schema.UpdateJSON, error)
-	GetMetadata() (JSONMetadataT, error)
+	GetContent() (*json_schema.UpdateJSON, error)
+	GetMetadata() (*JSONMetadataT, error)
 
 	IsContentUpdated() (bool, error)
 }
