@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	GitCommit = "0.0.1"
+	GitCommit           = "0.0.1"
 	UpdateCenterDotJSON = "/update-center.json"
 )
 
@@ -41,10 +41,11 @@ var (
 		SignKeyPath         string `long:"key-path" env:"SIGN_KEY_PATH" description:"private key path" required:"true"`
 		SignKeyPassword     string `long:"private-key-pass" env:"SIGN_KEY_PASSWORD"`
 
-		ServerPort			int `long:"listen-port" env:"LISTEN_PORT" default:"8282"`
+		ServerPort int `long:"listen-port" env:"LISTEN_PORT" default:"8282"`
 	}{}
 
 	//updateJSON *UpdateJSONT
+	juc *jenkins_update_center.JenkinsUCJSONT
 )
 
 func main() {
@@ -79,7 +80,6 @@ func main() {
 	log.Infof("Jenkins update.json ResignerService (v%s) starting up...", GitCommit)
 
 	jenkins_update_center.Init()
-
 
 	err = initialize()
 	if err != nil {

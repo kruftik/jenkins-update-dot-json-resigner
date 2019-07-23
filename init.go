@@ -1,13 +1,13 @@
 package main
 
 import (
-//"fmt"
-//"os"
-//"os/signal"
-//"syscall"
-//
-//"github.com/jessevdk/go-flags"
-//"go.uber.org/zap"
+	//"fmt"
+	//"os"
+	//"os/signal"
+	//"syscall"
+	//
+	//"github.com/jessevdk/go-flags"
+	//"go.uber.org/zap"
 	"jenkins-resigner-service/jenkins_update_center"
 )
 
@@ -22,12 +22,12 @@ func initialize() error {
 		return err
 	}
 
-	err = jenkins_update_center.ParseUpdateJSONLocation(Opts.UpdateJSONURL, Opts.UpdateJSONPath)
+	juc, err = jenkins_update_center.NewJenkinsUC(Opts.UpdateJSONURL, Opts.UpdateJSONPath, Opts.UpdateJSONCacheTTL)
 	if err != nil {
 		return err
 	}
 
-	err = initHTTP()
+	err = initHTTP(juc)
 	if err != nil {
 		return err
 	}

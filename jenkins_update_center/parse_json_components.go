@@ -1,20 +1,20 @@
 package jenkins_update_center
 
 import (
+	"bytes"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"jenkins-resigner-service/jenkins_update_center/json_schema"
-	"strings"
 )
 
-func extractJSONDocument(s string) (string, error) {
-	idxFrom := strings.Index(s, `{`)
-	idxTo := strings.LastIndex(s, `}`)
+func extractJSONDocument(s []byte) ([]byte, error) {
+	idxFrom := bytes.Index(s, []byte(`{`))
+	idxTo := bytes.LastIndex(s, []byte(`}`))
 
 	if idxFrom == -1 || idxTo == -1 {
-		return "", fmt.Errorf("cannot find a valid JSON document in the provided string")
+		return nil, fmt.Errorf("cannot find a valid JSON document in the provided string")
 	}
 
 	return s[idxFrom : idxTo+1], nil

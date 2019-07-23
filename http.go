@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	l "github.com/treastech/logger"
+	"jenkins-resigner-service/jenkins_update_center"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -16,7 +17,7 @@ const (
 	timeoutTotal = 15 * time.Second
 )
 
-func initProxy() (*httputil.ReverseProxy, error){
+func initProxy() (*httputil.ReverseProxy, error) {
 	originURL, err := url.ParseRequestURI(Opts.NewDownloadURI)
 	if err != nil {
 		log.Warn("origin URL is incorrect: ", err)
@@ -28,7 +29,7 @@ func initProxy() (*httputil.ReverseProxy, error){
 	return proxy, nil
 }
 
-func initHTTP() error {
+func initHTTP(juc *jenkins_update_center.JenkinsUCJSONT) error {
 	log.Info("Running http server... ")
 
 	r := chi.NewRouter()
@@ -57,8 +58,7 @@ func initHTTP() error {
 
 	port := strconv.Itoa(Opts.ServerPort)
 
-
-	if err := http.ListenAndServe(":" + port, r); err != nil {
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		return fmt.Errorf("ResignerService http server terminated: %s", err)
 	}
 

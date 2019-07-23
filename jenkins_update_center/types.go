@@ -1,14 +1,13 @@
 package jenkins_update_center
 
 import (
-	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
-	"io"
 	"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"sync"
+	"time"
 )
 
 type SigningInfoT struct {
@@ -52,10 +51,50 @@ type jsonSymbolReplacementRuleT struct {
 }
 
 type JenkinsUCJSONT struct {
-	src string
+	src interface{}
 
-	Get func() (io.Reader, error)
+	cacheTTL time.Duration
+
+	jsRaw     *cachedEntryT
+	jsPatched *cachedEntryT
+
+	get func() (*json_schema.UpdateJSON, error)
 	//isRemoteSource bool // true - URL; false - file
+}
+
+func (juc *JenkinsUCJSONT) Update() (err error) {
+	jsRaw, err := juc.get()
+	if err != nil {
+		return err
+	}
+
+	juc.jsRaw = NewEntryCache(jsRaw, juc.cacheTTL, func() (interface{}, error) {
+		return juc.get()
+	})
+
+	return err
+}
+
+func (juc *JenkinsUCJSONT) GetOriginal() (*json_schema.UpdateJSON, error) {
+	data, err := juc.jsRaw.Get()
+
+	uj, ok := data.(json_schema.UpdateJSON)
+	if !ok {
+		return nil, err
+	}
+
+	return &uj, err
+}
+
+func (juc *JenkinsUCJSONT) GetPatched() (*json_schema.UpdateJSON, error) {
+	data, err := juc.jsPatched.Get()
+
+	uj, ok := data.(json_schema.UpdateJSON)
+	if !ok {
+		return nil, err
+	}
+
+	return &uj, err
 }
 
 //type SyncedByteBuffer struct {

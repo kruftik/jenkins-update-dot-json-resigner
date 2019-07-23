@@ -58,7 +58,7 @@ func ParseSigningParameters(caPath, certPath, privPath, privEncPassword string) 
 			return fmt.Errorf("failed to parse certificate: " + err.Error())
 		}
 
-		log.Debugf("Certificate loaded from %s, validity between %s and %s for ", Opts.SignCertificatePath, cert.NotBefore, cert.NotAfter)
+		log.Debugf("Certificate loaded from %s, validity between %s and %s for ", certPath, cert.NotBefore, cert.NotAfter)
 	} else {
 		return fmt.Errorf("certificate path is not provided")
 	}
@@ -163,7 +163,6 @@ func VerifySignature(jsonData []byte, certificates []x509.Certificate, digest1, 
 	}
 	log.Debug("SHA512 digests match")
 
-
 	sig, err = hex.DecodeString(signature512)
 	err = rsa.VerifyPKCS1v15(crt, crypto.SHA512, shaXDigest, sig)
 	if err != nil {
@@ -195,10 +194,10 @@ func VerifySignature(jsonData []byte, certificates []x509.Certificate, digest1, 
 
 func (uj *UpdateJSONT) NewSignature(sInfo JSONSignatureComponents, roots *x509.CertPool, certs *x509.Certificate) (*json_schema.Signature, error) {
 	return &json_schema.Signature{
-		CorrectDigest512: sInfo.GetDigest512(),
+		CorrectDigest512:    sInfo.GetDigest512(),
 		CorrectSignature512: sInfo.GetSignature512(),
-		CorrectDigest: sInfo.GetDigest1(),
-		CorrectSignature: sInfo.GetSignature1(),
+		CorrectDigest:       sInfo.GetDigest1(),
+		CorrectSignature:    sInfo.GetSignature1(),
 		Certificates: []string{
 			sInfo.GetCertificate(uj.signingInfo.cert),
 		},
@@ -265,7 +264,6 @@ func (uj *UpdateJSONT) SignPatchedJSON() error {
 func SignJSON(jsonData []byte, priv *rsa.PrivateKey) (sInfo JSONSignatureComponents, err error) {
 	sInfo.digest1 = getDigestSHA1(jsonData)
 	sInfo.digest512 = getDigestSHA512(jsonData)
-
 
 	sInfo.signature512, err = rsa.SignPKCS1v15(rand.Reader, priv, crypto.SHA512, sInfo.digest512)
 	if err != nil {
