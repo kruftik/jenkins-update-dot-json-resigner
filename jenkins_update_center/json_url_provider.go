@@ -2,7 +2,6 @@ package jenkins_update_center
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"net/http"
@@ -86,19 +85,7 @@ func (p urlJSONProvider) GetContent() (*json_schema.UpdateJSON, error) {
 
 	log.Debugf("Successfully written %d bytes to buffer", n)
 
-	jsonStr, err := extractJSONDocument(jsonFileData.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("cannot strip json wrapping trailers: %s", err)
-	}
-
-	uj := &json_schema.UpdateJSON{}
-
-	err = json.Unmarshal(jsonStr, uj)
-	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %s", err)
-	}
-
-	return uj, nil
+	return prepareUpdateJSONObject(jsonFileData.Bytes())
 }
 
 func (p urlJSONProvider) getFreshMetadata() (*JSONMetadataT, error) {

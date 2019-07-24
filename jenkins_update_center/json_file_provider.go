@@ -1,6 +1,8 @@
 package jenkins_update_center
 
 import (
+	"fmt"
+	"io/ioutil"
 	"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"os"
 )
@@ -41,7 +43,14 @@ func (p *localFileJSONProvider) init(src string) error {
 }
 
 func (p *localFileJSONProvider) GetContent() (*json_schema.UpdateJSON, error) {
-	return nil, nil
+	log.Infof("Reading %s...", p.path)
+
+	sbytes, err := ioutil.ReadFile(p.path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read update.json content: %s", err)
+	}
+
+	return prepareUpdateJSONObject(sbytes)
 }
 
 func (p localFileJSONProvider) getFreshMetadata() (*JSONMetadataT, error) {

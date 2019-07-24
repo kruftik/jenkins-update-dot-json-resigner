@@ -1,16 +1,12 @@
 package jenkins_update_center
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 )
-
-func (juc *JenkinsUCJSONT) GetOriginalJSON() (*[]bytes.Buffer, error) {
-}
 
 func (uj *UpdateJSONT) SaveJSON(path string, savePatched bool) (err error) {
 	var (
@@ -84,20 +80,6 @@ func (uj *UpdateJSONT) PatchUpdateCenterURLs() error {
 	}
 
 	uj.isPatched = true
-
-	// Patch URL in Core section
-	uj.json.Core.URL = strings.ReplaceAll(uj.json.Core.URL, Opts.OriginDownloadURI, Opts.NewDownloadURI)
-
-	log.Debug("New Core URL: " + uj.json.Core.URL)
-
-	// and plugins download URLs
-	for pluginName, pluginInfo := range uj.json.Plugins {
-		pluginInfo.URL = strings.ReplaceAll(uj.json.Plugins[pluginName].URL, Opts.OriginDownloadURI, Opts.NewDownloadURI)
-
-		log.Debugf("New Plugin %s data: %s", pluginName, pluginInfo.URL)
-
-		uj.json.Plugins[pluginName] = pluginInfo
-	}
 
 	return nil
 }

@@ -1,8 +1,11 @@
 package jenkins_update_center
 
 import (
+	"bytes"
+	"encoding/json"
 	//"bytes"
 	"fmt"
+	"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"time"
 
 	//"github.com/tidwall/gjson"
@@ -72,6 +75,17 @@ func NewJenkinsUC(jsonURL, jsonPath string, cacheTTL time.Duration) (*JenkinsUCJ
 	juc.cacheTTL = cacheTTL
 
 	return juc, nil
+}
+
+func (juc JenkinsUCJSONT) GetOriginalJSON() (*json_schema.UpdateJSON, error) {
+	return juc.js.GetContent()
+}
+
+func (juc JenkinsUCJSONT) GetOriginalJSONP() ([]byte, error) {
+	return getJSONPString(juc.js)
+}
+
+func (juc JenkinsUCJSONT) GetOriginalUnsignedJSON() (*json_schema.UpdateJSON, error) {
 }
 
 //func (json *UpdateJSONT) LoadCertificates() error {

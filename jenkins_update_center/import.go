@@ -1,71 +1,43 @@
 package jenkins_update_center
 
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"jenkins-resigner-service/jenkins_update_center/json_schema"
-	"net/http"
-)
+//func downloadUpdateJSONFromURL(downloadURL string) (*json_schema.UpdateJSON, error) {
+//	log.Infof("Downloading %s...", downloadURL)
+//
+//	resp, err := http.Get(downloadURL)
+//	if err != nil {
+//		return nil, fmt.Errorf("cannot GET %s: %s", downloadURL, err)
+//	}
+//	defer func() {
+//		_ = resp.Body.Close()
+//	}()
+//
+//	jsonFileData := &bytes.Buffer{}
+//
+//	n, err := jsonFileData.ReadFrom(resp.Body)
+//	if err != nil {
+//		return nil, fmt.Errorf("cannot save update.json content to buffer: %s", err)
+//	}
+//
+//	log.Debugf("Successfully written %d bytes to buffer", n)
+//
+//	jsonStr, err := extractJSONDocument(jsonFileData.Bytes())
+//	if err != nil {
+//		return nil, fmt.Errorf("cannot strip json wrapping trailers: %s", err)
+//	}
+//
+//	uj := &json_schema.UpdateJSON{}
+//
+//	err = json.Unmarshal(jsonStr, uj)
+//	if err != nil {
+//		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %s", err)
+//	}
+//
+//	return uj, nil
+//}
+//
+//func readUpdateJSONFromFile(path string) (*json_schema.UpdateJSON, error) {
 
-func downloadUpdateJSONFromURL(downloadURL string) (*json_schema.UpdateJSON, error) {
-	log.Infof("Downloading %s...", downloadURL)
-
-	resp, err := http.Get(downloadURL)
-	if err != nil {
-		return nil, fmt.Errorf("cannot GET %s: %s", downloadURL, err)
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	jsonFileData := &bytes.Buffer{}
-
-	n, err := jsonFileData.ReadFrom(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("cannot save update.json content to buffer: %s", err)
-	}
-
-	log.Debugf("Successfully written %d bytes to buffer", n)
-
-	jsonStr, err := extractJSONDocument(jsonFileData.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("cannot strip json wrapping trailers: %s", err)
-	}
-
-	uj := &json_schema.UpdateJSON{}
-
-	err = json.Unmarshal(jsonStr, uj)
-	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %s", err)
-	}
-
-	return uj, nil
-}
-
-func readUpdateJSONFromFile(path string) (*json_schema.UpdateJSON, error) {
-	log.Infof("Reading %s...", path)
-
-	sbytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read update.json content: %s", err)
-	}
-
-	jsonStr, err := extractJSONDocument(sbytes)
-	if err != nil {
-		return nil, fmt.Errorf("cannot strip json wrapping trailers: %s", err)
-	}
-
-	uj := &json_schema.UpdateJSON{}
-
-	err = json.Unmarshal(jsonStr, uj)
-	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %s", err)
-	}
-
-	return uj, nil
-}
+//}
 
 //func NewUpdateJSONFromURL(downloadURL string) (*UpdateJSONT, error) {
 //	f, err := downloadUpdateJSONFromURL(downloadURL)
