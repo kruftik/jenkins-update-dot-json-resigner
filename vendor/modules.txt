@@ -5,12 +5,8 @@ github.com/go-chi/chi
 github.com/go-chi/chi/middleware
 # github.com/jessevdk/go-flags v1.4.0
 github.com/jessevdk/go-flags
-# github.com/tidwall/gjson v1.3.2
-github.com/tidwall/gjson
-# github.com/tidwall/match v1.0.1
-github.com/tidwall/match
-# github.com/tidwall/pretty v1.0.0
-github.com/tidwall/pretty
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
 # github.com/treastech/logger v0.0.0-20180705232552-e381e9ecf2e3
 github.com/treastech/logger
 # go.uber.org/atomic v1.4.0

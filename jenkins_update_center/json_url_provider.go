@@ -3,10 +3,11 @@ package jenkins_update_center
 import (
 	"bytes"
 	"fmt"
-	"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -19,6 +20,8 @@ type urlJSONProvider struct {
 	url      *url.URL
 	metadata *JSONMetadataT
 
+	content *UpdateJSON
+
 	hc *http.Client
 }
 
@@ -28,8 +31,9 @@ func ValidateURLJSONProviderSource(src string) error {
 		return err
 	}
 	defer func() {
-		err = resp.Body.Close()
-		log.Warn(err)
+		if err = resp.Body.Close(); err != nil {
+			log.Warn(err)
+		}
 	}()
 
 	return nil
@@ -39,6 +43,11 @@ func NewURLJSONProvider(sURL string) (*urlJSONProvider, error) {
 	p := &urlJSONProvider{}
 
 	if err := p.init(sURL); err != nil {
+		return nil, err
+	}
+
+	// Warm up cache
+	if _, _, err := p.GetContent(); err != nil {
 		return nil, err
 	}
 
@@ -60,35 +69,71 @@ func (p *urlJSONProvider) init(src string) error {
 			IdleConnTimeout: IdleConnTimeout * time.Second,
 		},
 		Timeout: Timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			//l := len(via)
+			log.Debugf("Got redirect to %s", req.URL.String())
+			return nil
+		},
 	}
 
 	return nil
 }
 
-func (p urlJSONProvider) GetContent() (*json_schema.UpdateJSON, error) {
+func (p urlJSONProvider) getRemoteURLMetadata(r *http.Response) (*JSONMetadataT, error) {
+	dt, err := http.ParseTime(r.Header.Get("Last-Modified"))
+	if err != nil {
+		return nil, err
+	}
+
+	meta := &JSONMetadataT{
+		LastModified: dt,
+		Size:         r.ContentLength,
+		etag:         r.Header.Get("ETag"),
+	}
+
+	return meta, nil
+}
+
+func (p urlJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) {
 	log.Infof("Downloading %s...", p.url)
 
-	resp, err := http.Get(p.url.String())
+	resp, err := p.hc.Get(p.url.String())
 	if err != nil {
-		return nil, fmt.Errorf("cannot GET %s: %s", p.url.String(), err)
+		return nil, nil, fmt.Errorf("cannot GET %s: %s", p.url.String(), err)
 	}
 	defer func() {
-		_ = resp.Body.Close()
+		if err = resp.Body.Close(); err != nil {
+			log.Warn(err)
+		}
 	}()
 
 	jsonFileData := &bytes.Buffer{}
 
 	n, err := jsonFileData.ReadFrom(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("cannot save update.json content to buffer: %s", err)
+		return nil, nil, fmt.Errorf("cannot save update.json content to buffer: %s", err)
 	}
 
 	log.Debugf("Successfully written %d bytes to buffer", n)
 
-	return prepareUpdateJSONObject(jsonFileData.Bytes())
+	jsc, err := prepareUpdateJSONObject(jsonFileData.Bytes())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	meta, err := p.getRemoteURLMetadata(resp)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return jsc, meta, nil
 }
 
-func (p urlJSONProvider) getFreshMetadata() (*JSONMetadataT, error) {
+//func (p urlJSONProvider) getMetadata() (*JSONMetadataT, error) {
+//	return p.metadata, nil
+//}
+
+func (p urlJSONProvider) GetFreshMetadata() (*JSONMetadataT, error) {
 	resp, err := p.hc.Head(p.url.String())
 	if err != nil {
 		return nil, err
@@ -100,37 +145,55 @@ func (p urlJSONProvider) getFreshMetadata() (*JSONMetadataT, error) {
 		}
 	}()
 
-	dt, err := http.ParseTime(resp.Header.Get("Last-Modified"))
+	meta, err := p.getRemoteURLMetadata(resp)
 	if err != nil {
 		return nil, err
-	}
-
-	meta := &JSONMetadataT{
-		LastModified: dt,
-		Size:         resp.ContentLength,
 	}
 
 	return meta, nil
 }
 
-func (p urlJSONProvider) GetMetadata() (*JSONMetadataT, error) {
-	meta, err := p.getFreshMetadata()
-	if err != nil {
-		return nil, err
+func (p *urlJSONProvider) RefreshMetadata(meta *JSONMetadataT) (*JSONMetadataT, error) {
+	var err error
+
+	if meta == nil {
+		meta, err = p.GetFreshMetadata()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	p.metadata = meta
 
-	return p.metadata, nil
+	return meta, nil
 }
 
 func (p *urlJSONProvider) IsContentUpdated() (bool, error) {
-	meta, err := p.getFreshMetadata()
+	meta, err := p.GetFreshMetadata()
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "cannot if metadata cache is still valid")
 	}
 
-	isUpdated := meta.LastModified.After(p.metadata.LastModified) || meta.Size != p.metadata.Size
+	//isUpdated := meta.LastModified.After(p.metadata.LastModified) || meta.Size != p.metadata.Size
+	isUpdated := meta.Size != p.metadata.Size || meta.etag != p.metadata.etag
+
+	log.Debugf("Remote content isUpdated=%t", isUpdated)
 
 	return isUpdated, nil
+}
+
+func (p *urlJSONProvider) GetContent() (*UpdateJSON, *JSONMetadataT, error) {
+	isUpdated, err := p.IsContentUpdated()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if isUpdated {
+		p.content, p.metadata, err = p.GetFreshContent()
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return p.content, p.metadata, nil
 }

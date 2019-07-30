@@ -2,9 +2,27 @@ package jenkins_update_center
 
 import (
 	"bytes"
-	"encoding/json"
+	//"encoding/json"
+
+	//"encoding/json"
+
+	//"encoding/json"
 	"fmt"
-	"jenkins-resigner-service/jenkins_update_center/json_schema"
+	cjson "github.com/gibson042/canonicaljson-go"
+)
+
+type jsonSymbolReplacementRuleT struct {
+	from []byte
+	to   []byte
+}
+
+var (
+	jsonSymbolReplacementsMap = []jsonSymbolReplacementRuleT{
+		{[]byte("\\u0026"), []byte("&")},
+		{[]byte("\\u003c/"), []byte("<\\/")},
+		{[]byte("\\u003c"), []byte("<")},
+		{[]byte("\\u003e"), []byte(">")},
+	}
 )
 
 func replaceSymbolsByTrickyMap(data []byte) []byte {
@@ -26,15 +44,15 @@ func extractJSONDocument(s []byte) ([]byte, error) {
 	return s[idxFrom : idxTo+1], nil
 }
 
-func prepareUpdateJSONObject(src []byte) (*json_schema.UpdateJSON, error) {
+func prepareUpdateJSONObject(src []byte) (*UpdateJSON, error) {
 	jsonStr, err := extractJSONDocument(src)
 	if err != nil {
 		return nil, fmt.Errorf("cannot strip json wrapping trailers: %s", err)
 	}
 
-	uj := &json_schema.UpdateJSON{}
+	uj := &UpdateJSON{}
 
-	err = json.Unmarshal(jsonStr, uj)
+	err = cjson.Unmarshal(jsonStr, uj)
 	if err != nil {
 		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %s", err)
 	}
@@ -42,13 +60,11 @@ func prepareUpdateJSONObject(src []byte) (*json_schema.UpdateJSON, error) {
 	return uj, nil
 }
 
-func getJSONPString(jsp JSONProvider) ([]byte, error) {
-	content, err := jsp.GetContent()
+func GetJSONPString(juc *UpdateJSON) ([]byte, error) {
+	in, err := cjson.Marshal(juc)
 	if err != nil {
 		return nil, err
 	}
-
-	in, err := json.Marshal(content)
 
 	jsonp := make([]byte, 0, len(wrappedJSONPrefix)+len(in)+len(wrappedJSONPostfix))
 	jsonp = append(jsonp, wrappedJSONPrefix...)
@@ -58,13 +74,17 @@ func getJSONPString(jsp JSONProvider) ([]byte, error) {
 	return jsonp, nil
 }
 
-func getUnsignedJSON(signedObj json_schema.UpdateJSON) ([]byte, error) {
-	c := json_schema.InsecureUpdateJSON(signedObj)
+func getUnsignedJSON(signedObj UpdateJSON) ([]byte, error) {
+	c := InsecureUpdateJSON(signedObj)
 
-	data, err := json.Marshal(c)
+	data, err := cjson.Marshal(c)
 	if err != nil {
 		return nil, err
 	}
 
 	return replaceSymbolsByTrickyMap(data), nil
+}
+
+func (jsonData *InsecureUpdateJSON) GetBytes() ([]byte, error) {
+	return cjson.Marshal(*jsonData)
 }

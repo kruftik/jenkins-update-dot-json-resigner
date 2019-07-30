@@ -1,10 +1,10 @@
 package jenkins_update_center
 
 import (
-	"fmt"
 	"io/ioutil"
-	"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 type localFileJSONProvider struct {
@@ -18,8 +18,9 @@ func ValidateLocalFileJSONProviderSource(src string) error {
 		return err
 	}
 	defer func() {
-		err = f.Close()
-		log.Warn(err)
+		if err = f.Close(); err != nil {
+			log.Warn(err)
+		}
 	}()
 
 	return nil
@@ -32,28 +33,47 @@ func NewLocalFileJSONProvider(path string) (*localFileJSONProvider, error) {
 		return nil, err
 	}
 
+	// Warm up cache
+	if _, _, err := p.GetContent(); err != nil {
+		return nil, err
+	}
+
 	return p, nil
 }
 
 func (p *localFileJSONProvider) init(src string) error {
 	p.path = src
-	p.metadata = &JSONMetadataT{}
 
 	return nil
 }
 
-func (p *localFileJSONProvider) GetContent() (*json_schema.UpdateJSON, error) {
+func (p *localFileJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) {
 	log.Infof("Reading %s...", p.path)
 
 	sbytes, err := ioutil.ReadFile(p.path)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read update.json content: %s", err)
+		return nil, nil, errors.Wrapf(err, "cannot read update.json content: %s", err)
 	}
 
-	return prepareUpdateJSONObject(sbytes)
+	uj, err := prepareUpdateJSONObject(sbytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err = uj.VerifySignature(); err != nil {
+		return nil, nil, err
+	}
+
+	meta, err := p.GetFreshMetadata()
+
+	return uj, meta, nil
 }
 
-func (p localFileJSONProvider) getFreshMetadata() (*JSONMetadataT, error) {
+//func (p localFileJSONProvider) getMetadata() (*JSONMetadataT, error) {
+//	return p.metadata, nil
+//}
+
+func (p localFileJSONProvider) GetFreshMetadata() (*JSONMetadataT, error) {
 	fi, err := os.Stat(p.path)
 	if err != nil {
 		return nil, err
@@ -67,10 +87,14 @@ func (p localFileJSONProvider) getFreshMetadata() (*JSONMetadataT, error) {
 	return meta, nil
 }
 
-func (p *localFileJSONProvider) GetMetadata() (*JSONMetadataT, error) {
-	meta, err := p.getFreshMetadata()
-	if err != nil {
-		return nil, err
+func (p *localFileJSONProvider) RefreshMetadata(meta *JSONMetadataT) (*JSONMetadataT, error) {
+	var err error
+
+	if meta == nil {
+		meta, err = p.GetFreshMetadata()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	p.metadata = meta
@@ -79,12 +103,16 @@ func (p *localFileJSONProvider) GetMetadata() (*JSONMetadataT, error) {
 }
 
 func (p *localFileJSONProvider) IsContentUpdated() (bool, error) {
-	meta, err := p.getFreshMetadata()
+	meta, err := p.GetFreshMetadata()
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "cannot if metadata cache is still valid")
 	}
 
 	isUpdated := (p.metadata.LastModified == meta.LastModified) && (p.metadata.Size == meta.Size)
 
 	return isUpdated, nil
+}
+
+func (p *localFileJSONProvider) GetContent() (*UpdateJSON, *JSONMetadataT, error) {
+	return p.GetFreshContent()
 }

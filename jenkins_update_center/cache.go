@@ -8,20 +8,20 @@ import (
 type cacheUpdateFnT func() (interface{}, error)
 
 type cachedEntryT struct {
-	data      interface{}
-	Ttl       time.Duration
-	UpdatedAt time.Time
-	Eol       time.Time
+	data       interface{}
+	Ttl        time.Duration
+	UpdatedAt  time.Time
+	ExpiringAt time.Time
 
 	updateFn cacheUpdateFnT
 }
 
 func NewEntryCache(data interface{}, ttl time.Duration, updateFn cacheUpdateFnT) *cachedEntryT {
 	c := cachedEntryT{
-		data:      data,
-		Ttl:       ttl,
-		UpdatedAt: time.Now(),
-		Eol:       time.Now().Add(ttl),
+		data:       data,
+		Ttl:        ttl,
+		UpdatedAt:  time.Now(),
+		ExpiringAt: time.Now().Add(ttl),
 
 		updateFn: updateFn,
 	}
@@ -30,7 +30,7 @@ func NewEntryCache(data interface{}, ttl time.Duration, updateFn cacheUpdateFnT)
 }
 
 func (c *cachedEntryT) IsExpired() bool {
-	return time.Now().After(c.Eol)
+	return time.Now().After(c.ExpiringAt)
 }
 
 func (c *cachedEntryT) IsValid() bool {
@@ -53,7 +53,7 @@ func (c *cachedEntryT) Update() error {
 }
 
 func (c *cachedEntryT) Get() (interface{}, error) {
-	if c.IsExpired() {
+	if c.IsExpired() || c.data == nil {
 		log.Info("cache has expired")
 
 		if err := c.Update(); err != nil {
@@ -66,5 +66,5 @@ func (c *cachedEntryT) Get() (interface{}, error) {
 func (c *cachedEntryT) Set(data interface{}) {
 	c.data = data
 	c.UpdatedAt = time.Now()
-	c.Eol = time.Now().Add(c.Ttl)
+	c.ExpiringAt = time.Now().Add(c.Ttl)
 }

@@ -1,4 +1,4 @@
-package json_schema
+package jenkins_update_center
 
 type Core struct {
 	BuildDate string `json:"buildDate"`

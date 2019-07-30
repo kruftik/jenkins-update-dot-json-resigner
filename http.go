@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	l "github.com/treastech/logger"
@@ -11,6 +10,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"net/http/pprof"
 )
 
 const (
@@ -29,16 +30,23 @@ func initProxy() (*httputil.ReverseProxy, error) {
 	return proxy, nil
 }
 
-func initHTTP(juc *jenkins_update_center.JenkinsUCJSONT) error {
+func initHTTP(juc *jenkins_update_center.JenkinsUCJSONT) (*chi.Mux, error) {
 	log.Info("Running http server... ")
 
 	r := chi.NewRouter()
 
 	r.Use(middleware.Heartbeat("/healthz"))
 
+	// Регистрация pprof-обработчиков
+	r.HandleFunc("/debug/pprof/", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
 	proxy, err := initProxy()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r.Group(func(r chi.Router) {
@@ -52,17 +60,23 @@ func initHTTP(juc *jenkins_update_center.JenkinsUCJSONT) error {
 		r.Get("/*", proxy.ServeHTTP)
 
 		r.Get(UpdateCenterDotJSON, func(w http.ResponseWriter, r *http.Request) {
+			c, err := juc.GetPatchedAndSigned()
+			if err != nil {
+				log.Warn(err)
+				return
+			}
 
+			cl := strconv.Itoa(len(c))
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Length", cl)
+			w.Header().Set("Etag", "update-center-json-"+cl)
+
+			if _, err = w.Write(c); err != nil {
+				log.Warn(err)
+				return
+			}
 		})
 	})
 
-	port := strconv.Itoa(Opts.ServerPort)
-
-	if err := http.ListenAndServe(":"+port, r); err != nil {
-		return fmt.Errorf("ResignerService http server terminated: %s", err)
-	}
-
-	log.Info("http server completed")
-
-	return nil
+	return r, nil
 }

@@ -2,3 +2,6 @@ build
 jenkins_home
 .idea
 nginx_home
+jsons
+jsons/
+jsons/**

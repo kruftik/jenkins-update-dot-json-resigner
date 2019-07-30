@@ -10,8 +10,6 @@ import (
 	"go.uber.org/zap"
 	"jenkins-resigner-service/jenkins_update_center"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -68,15 +66,6 @@ func main() {
 	zap.ReplaceGlobals(logger)
 	log = zap.S()
 
-	// Shutting down handling...
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		log.Infow("ResignerService shutting down")
-		os.Exit(0)
-	}()
-
 	log.Infof("Jenkins update.json ResignerService (v%s) starting up...", GitCommit)
 
 	jenkins_update_center.Init()
@@ -86,64 +75,4 @@ func main() {
 		log.Errorf(err.Error())
 		return
 	}
-
-	//jsonMap := updateJSON.json.Value().(update_json_schema.UpdateJSON)
-	//if !ok {
-	//	panic("cannot unmarshal JSON")
-	//}
-	//v := reflect.ValueOf(updateJSON.json.Signature)
-	//typeOfS := v.Type()
-	////keys := v.MapKeys()
-	////strkeys := make([]string, len(keys))
-	//for i := 0; i < v.NumField(); i++ {
-	//	fmt.Printf("%s: %s\n\n", typeOfS.Field(i).Name, v.Field(i).String())
-	//}
-	//insecureUpdateJSON :=
-
-	//
-	//if err != nil {
-	//	log.Error(err)
-	//	return
-	//}
-
-	//fmt.Print(insecureUpdateJSON.Signature.CorrectSignature512)
-
-	//if err = updateJSON.LoadCertificates(); err != nil {
-	//	log.Error(err)
-	//}
-
-	bDigestsMatch, err := updateJSON.VerifySignature()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Infof("isDigestsMatch: %t", bDigestsMatch)
-
-	err = updateJSON.PatchUpdateCenterURLs()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Debug("JSON patched")
-
-	err = updateJSON.SignPatchedJSON()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Debug("JSON resigned")
-
-	bDigestsMatch, err = updateJSON.VerifySignature()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Infof("isDigestsMatch: %t", bDigestsMatch)
-
-	err = updateJSON.SaveJSONP("jsons/resigned.json", false)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
 }

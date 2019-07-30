@@ -1,7 +1,6 @@
 package jenkins_update_center
 
 import (
-	"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"time"
 )
 
@@ -13,13 +12,16 @@ var (
 type JSONMetadataT struct {
 	LastModified time.Time
 	Size         int64
+	etag         string
 }
 
 type JSONProvider interface {
-	init(string) error
+	GetFreshContent() (*UpdateJSON, *JSONMetadataT, error)
+	GetFreshMetadata() (*JSONMetadataT, error)
 
-	GetContent() (*json_schema.UpdateJSON, error)
-	GetMetadata() (*JSONMetadataT, error)
+	RefreshMetadata(*JSONMetadataT) (*JSONMetadataT, error)
+
+	GetContent() (*UpdateJSON, *JSONMetadataT, error)
 
 	IsContentUpdated() (bool, error)
 }
