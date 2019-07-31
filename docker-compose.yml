@@ -11,22 +11,23 @@ services:
       JAVA_OPTS: -Xms1g -Xmx1g
 
   update-json-resigner:
+#    image: kruft/jenkins-update-dot-json-resigner:1.0
     build:
       context: .
     volumes:
-#      - ./nginx_home/nginx.conf:/etc/nginx/nginx.conf
-#      - ./nginx_home/www:/usr/share/nginx/html
       - ./cert:/cert/
     environment:
-      DEBUG: "true"
+#      DEBUG: "true"
       LISTEN_PORT: 8282
 
+      UPDATE_JSON_URL: http://updates.jenkins.io/update-center.json
+
       UPDATE_JSON_CACHE_TTL: 30m
+
+      ORIGIN_DOWNLOAD_URL: http://updates.jenkins-ci.org/download/
+      NEW_DOWNLOAD_URI: http://ftp-nyc.osuosl.org/pub/jenkins/
+
       SIGN_CERTIFICATE_PATH: /cert/your-update-center.crt
       SIGN_KEY_PATH: /cert/your-update-center.key
-      NEW_DOWNLOAD_URI: http://ftp-nyc.osuosl.org/pub/jenkins/
-      UPDATE_JSON_URL: http://updates.jenkins-ci.org/update.json
-#      http_proxy": "http://10.16.0.2:3128",
-      ORIGIN_DOWNLOAD_URL: http://updates.jenkins-ci.org/download/
     ports:
       - "8282:8282"
