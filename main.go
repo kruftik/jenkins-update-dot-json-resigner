@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	GitCommit           = "0.0.1"
 	UpdateCenterDotJSON = "/update-center.json"
 )
 
 var (
+	GitCommit = "0.0.1"
+
 	logger *zap.Logger
 	log    *zap.SugaredLogger
 	// Opts with all cli commands and flags

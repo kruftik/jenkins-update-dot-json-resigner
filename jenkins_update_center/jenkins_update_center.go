@@ -104,12 +104,12 @@ func NewJenkinsUC(opts JenkinsUCOpts) (*JenkinsUCJSONT, error) {
 	if opts.Src.IsRemoteSource {
 		origContentProvider, err = NewURLJSONProvider(opts.Src.Src)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "cannot initialize URLJSONProvider")
 		}
 	} else {
 		origContentProvider, err = NewLocalFileJSONProvider(opts.Src.Src)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "cannot initialize LocalFileJSONProvider")
 		}
 	}
 

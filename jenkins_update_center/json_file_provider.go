@@ -30,12 +30,12 @@ func NewLocalFileJSONProvider(path string) (*localFileJSONProvider, error) {
 	p := &localFileJSONProvider{}
 
 	if err := p.init(path); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "cannot call init function of LocalFileJSONProvider")
 	}
 
 	// Warm up cache
 	if _, _, err := p.GetContent(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "cannot warm up LocalFileJSONProvider cache")
 	}
 
 	return p, nil

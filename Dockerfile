@@ -6,7 +6,8 @@ COPY  . .
 
 RUN apk add --no-cache \
         git \
-        ca-certificates \
+#        tzdata \
+#        ca-certificates \
         upx
 
 #RUN go get -u github.com/semrush/zenrpc/zenrpc \
@@ -23,14 +24,17 @@ RUN upx -q /app && \
 
 # ---
 
-FROM scratch
+FROM alpine:3.9
 
 WORKDIR /
 
-#RUN adduser -S -D -H -h /srv appuser
-#USER appuser
+RUN adduser -S -D -H -h /srv appuser
+USER appuser
 
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+#COPY --from=builder /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+#COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
 COPY --from=builder /app /app
 
 EXPOSE 8080

@@ -204,6 +204,8 @@ func (uj UpdateJSON) VerifySignature() error {
 		sig        []byte
 	)
 
+	log.Info("Verifying JSON document signature...")
+
 	isDigestsMatch := func(computedDigest []byte, providedDigest string) bool {
 		// SHA-512
 		if strings.EqualFold(providedDigest, hex.EncodeToString(computedDigest)) {
@@ -217,8 +219,6 @@ func (uj UpdateJSON) VerifySignature() error {
 
 		return false
 	}
-
-	log.Info("Verifying JSON document signature...")
 
 	certificates, err := uj.GetCertificates()
 	if err != nil {

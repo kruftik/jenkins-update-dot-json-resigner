@@ -27,12 +27,12 @@ func initialize() error {
 		Opts.SignKeyPassword,
 	)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "cannot parse input args / envs")
 	}
 
 	locationsOpts, err := jenkins_update_center.ValidateUpdateJSONLocation(Opts.UpdateJSONURL, Opts.UpdateJSONPath)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "cannot parse update-center.json location")
 	}
 
 	jucOpts := jenkins_update_center.JenkinsUCOpts{
@@ -47,7 +47,7 @@ func initialize() error {
 
 	juc, err = jenkins_update_center.NewJenkinsUC(jucOpts)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "cannot initialize JenkinsUC object")
 	}
 
 	// Shutting down handling...
@@ -64,7 +64,7 @@ func initialize() error {
 
 	r, err := initHTTP(juc)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "cannot initialize HTTP-server")
 	}
 
 	if err := http.ListenAndServe(":"+strconv.Itoa(Opts.ServerPort), r); err != nil {

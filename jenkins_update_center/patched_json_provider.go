@@ -101,6 +101,8 @@ func NewPatchedJSONProvider(orig JSONProvider, cacheTtl time.Duration, patchOpts
 }
 
 func (p *PatchedJSONProvider) patchContent(signedOrig *UpdateJSON) (*InsecureUpdateJSON, error) {
+	log.Info("Patching JSONp content...")
+
 	c := InsecureUpdateJSON(*signedOrig)
 
 	// Patch URL in Core section
@@ -117,10 +119,13 @@ func (p *PatchedJSONProvider) patchContent(signedOrig *UpdateJSON) (*InsecureUpd
 	}
 	log.Debug("Plugin URLs patched")
 
+	log.Debug("Patching JSONp content [done]")
 	return &c, nil
 }
 
 func (p PatchedJSONProvider) signContent(c *InsecureUpdateJSON) (*UpdateJSON, error) {
+	log.Info("Signing JSONp content...")
+
 	signature, err := p.signingOpts.SignJSONData(c)
 	if err != nil {
 		return nil, err
@@ -129,6 +134,7 @@ func (p PatchedJSONProvider) signContent(c *InsecureUpdateJSON) (*UpdateJSON, er
 	signedObj := UpdateJSON(*c)
 	signedObj.Signature = *signature
 
+	log.Debug("Signing JSONp content [done]")
 	return &signedObj, nil
 }
 

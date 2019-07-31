@@ -43,12 +43,12 @@ func NewURLJSONProvider(sURL string) (*urlJSONProvider, error) {
 	p := &urlJSONProvider{}
 
 	if err := p.init(sURL); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "cannot call init function of URLJSONProvider")
 	}
 
 	// Warm up cache
 	if _, _, err := p.GetContent(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "cannot warm up  URLJSONProvider cache")
 	}
 
 	return p, nil
@@ -82,7 +82,7 @@ func (p *urlJSONProvider) init(src string) error {
 func (p urlJSONProvider) getRemoteURLMetadata(r *http.Response) (*JSONMetadataT, error) {
 	dt, err := http.ParseTime(r.Header.Get("Last-Modified"))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "%s is not valid datetime string", r.Header.Get("Last-Modified"))
 	}
 
 	meta := &JSONMetadataT{
