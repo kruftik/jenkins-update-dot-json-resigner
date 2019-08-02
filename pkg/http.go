@@ -4,7 +4,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	l "github.com/treastech/logger"
-	"jenkins-resigner-service/jenkins_update_center"
+	"jenkins-resigner-service/pkg/jenkins_update_center"
 	"net/http"
 	"net/http/httputil"
 	"net/url"

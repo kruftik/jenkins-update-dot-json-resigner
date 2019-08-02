@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
 	"go.uber.org/zap"
-	"jenkins-resigner-service/jenkins_update_center"
+	"jenkins-resigner-service/pkg/jenkins_update_center"
 	"os"
 	"time"
 )
