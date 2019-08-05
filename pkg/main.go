@@ -32,8 +32,8 @@ var (
 
 		UpdateJSONCacheTTL time.Duration `long:"cache-ttl" env:"UPDATE_JSON_CACHE_TTL" default:"30m"`
 
-		OriginDownloadURI string `long:"origin-download-uri" env:"ORIGIN_DOWNLOAD_URL" default:"http://updates.jenkins-ci.org/"`
-		NewDownloadURI    string `long:"new-download-uri" env:"NEW_DOWNLOAD_URI" required:"true"`
+		OriginDownloadURL string `long:"origin-download-uri" env:"ORIGIN_DOWNLOAD_URL" default:"http://updates.jenkins-ci.org/"`
+		NewDownloadURL    string `long:"new-download-uri" env:"NEW_DOWNLOAD_URL" required:"true"`
 
 		SignCAPath          string `long:"ca-certificate-path" env:"SIGN_CA_PATH" description:"x509 CA certificates path"`
 		SignCertificatePath string `long:"certificate-path" env:"SIGN_CERTIFICATE_PATH" description:"x509-certificate path" required:"true"`

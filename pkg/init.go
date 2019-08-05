@@ -39,8 +39,8 @@ func initialize() error {
 		Src:      locationsOpts,
 		CacheTtl: Opts.UpdateJSONCacheTTL,
 		PatchOpts: jenkins_update_center.JenkinsPatchOpts{
-			From: Opts.OriginDownloadURI,
-			To:   Opts.NewDownloadURI,
+			From: Opts.OriginDownloadURL,
+			To:   Opts.NewDownloadURL,
 		},
 		SigningInfo: signInfo,
 	}

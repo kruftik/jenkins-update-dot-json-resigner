@@ -19,7 +19,7 @@ const (
 )
 
 func initProxy() (*httputil.ReverseProxy, error) {
-	originURL, err := url.ParseRequestURI(Opts.NewDownloadURI)
+	originURL, err := url.ParseRequestURI(Opts.NewDownloadURL)
 	if err != nil {
 		log.Warn("origin URL is incorrect: ", err)
 		return nil, err
