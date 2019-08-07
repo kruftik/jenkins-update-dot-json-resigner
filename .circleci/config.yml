@@ -87,17 +87,17 @@ workflows:
   version: 2
   untagged-build:
     jobs:
-      - docker-repo-login
       - image-build
       - image-push:
           requires:
+            - image-build
             - docker-repo-login
   tagged-build:
     jobs:
       - docker-repo-login:
-          filters:
+          filters:  # required since `image-promote` has tag filters AND requires `docker-repo-login`
             tags:
-              only: /^v.*/
+              only: /.*/
       - image-promote:
           requires:
             - docker-repo-login
