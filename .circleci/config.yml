@@ -84,9 +84,9 @@ workflows:
   tagged-build:
     jobs:
       - docker-repo-login
-        filters:
-          tags:
-            only: /^v.*/
+          filters:
+            tags:
+              only: /^v.*/
       - image-promote:
           filters:
             tags:
