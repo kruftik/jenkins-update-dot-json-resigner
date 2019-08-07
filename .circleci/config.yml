@@ -57,10 +57,12 @@ workflows:
   version: 2
   untagged-build:
     jobs:
-      - build
+      - image-build
   tagged-build:
     jobs:
       - image-promote:
           filters:
             tags:
               only: /^v.*/
+          branches:
+            ignore: /.*/
