@@ -83,7 +83,7 @@ workflows:
       - image-build
   tagged-build:
     jobs:
-      - docker-repo-login
+      - docker-repo-login:
           filters:
             tags:
               only: /^v.*/
