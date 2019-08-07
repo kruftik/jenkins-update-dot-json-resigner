@@ -37,7 +37,7 @@ jobs:
               echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
 
 
-              docker tag app "${DOCKER_REPO}:${DOCKER_REPO}:build-${CIRCLE_BUILD_NUM}"
+              docker tag app "${DOCKER_REPO}:build-${CIRCLE_BUILD_NUM}"
 
               docker tag app "${DOCKER_REPO}:${CIRCLE_SHA1}"
 
