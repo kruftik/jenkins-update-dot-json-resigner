@@ -11,6 +11,16 @@ jobs:
           command: |
             echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
 
+  image-push:
+    docker:
+      - image: docker:18.06.0-ce-git
+    steps:
+      - setup_remote_docker
+      - run:
+          name: Push application Docker image
+          command: |
+            docker push "${DOCKER_REPO}"
+
   image-build:
     docker:
       - image: docker:18.06.0-ce-git
@@ -41,7 +51,7 @@ jobs:
           paths:
             - /caches/app.tar
       - deploy:
-          name: Push application Docker image
+          name: Tag application Docker image
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               docker tag app "${DOCKER_REPO}:build-${CIRCLE_BUILD_NUM}"
@@ -49,9 +59,6 @@ jobs:
               docker tag app "${DOCKER_REPO}:${CIRCLE_SHA1}"
 
               docker tag app "${DOCKER_REPO}:latest"
-
-
-              docker push "${DOCKER_REPO}"
             fi
 
   image-promote:
@@ -82,6 +89,9 @@ workflows:
     jobs:
       - docker-repo-login
       - image-build
+      - image-push:
+          requires:
+            - docker-repo-login
   tagged-build:
     jobs:
       - docker-repo-login:
@@ -89,6 +99,8 @@ workflows:
             tags:
               only: /^v.*/
       - image-promote:
+          requires:
+            - docker-repo-login
           filters:
             tags:
               only: /^v.*/
