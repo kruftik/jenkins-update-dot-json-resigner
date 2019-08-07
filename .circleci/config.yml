@@ -1,6 +1,15 @@
 version: 2
 
 jobs:
+  docker-repo-login:
+    docker:
+      - image: docker:18.06.0-ce-git
+    steps:
+      - run:
+          name: Login to Docker repository
+          command: |
+            echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
+
   image-build:
     docker:
       - image: docker:18.06.0-ce-git
@@ -34,9 +43,6 @@ jobs:
           name: Push application Docker image
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
-
-
               docker tag app "${DOCKER_REPO}:build-${CIRCLE_BUILD_NUM}"
 
               docker tag app "${DOCKER_REPO}:${CIRCLE_SHA1}"
@@ -73,9 +79,14 @@ workflows:
   version: 2
   untagged-build:
     jobs:
+      - docker-repo-login
       - image-build
   tagged-build:
     jobs:
+      - docker-repo-login
+        filters:
+          tags:
+            only: /^v.*/
       - image-promote:
           filters:
             tags:
