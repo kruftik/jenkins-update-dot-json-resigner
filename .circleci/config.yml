@@ -68,11 +68,11 @@ workflows:
   untagged-build:
     jobs:
       - image-build
-#  tagged-build:
-#    jobs:
-#      - image-promote:
-#          filters:
-#            tags:
-#              only: /^v.*/
-#          branches:
-#            ignore: /.*/
+  tagged-build:
+    jobs:
+      - image-promote:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
