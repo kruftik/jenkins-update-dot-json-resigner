@@ -57,6 +57,7 @@ jobs:
           command: |
             docker pull ${DOCKER_REPO}:${CIRCLE_SHA1}
             docker tag ${DOCKER_REPO}:${CIRCLE_SHA1} ${DOCKER_REPO}:${CIRCLE_TAG}
+            docker push ${DOCKER_REPO}:${CIRCLE_TAG}
 
 #  publish-github-release:
 #    docker:
