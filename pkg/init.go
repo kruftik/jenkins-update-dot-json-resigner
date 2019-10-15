@@ -35,6 +35,10 @@ func initialize() error {
 		return errors.Wrap(err, "cannot parse update-center.json location")
 	}
 
+	if locationsOpts.IsRemoteSource {
+		locationsOpts.Timeout = Opts.UpdateJSONDownloadTimeout
+	}
+
 	jucOpts := jenkins_update_center.JenkinsUCOpts{
 		Src:      locationsOpts,
 		CacheTtl: Opts.UpdateJSONCacheTTL,

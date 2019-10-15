@@ -13,7 +13,7 @@ import (
 var (
 	MaxIdleConns    = 10
 	IdleConnTimeout = 30 * time.Second
-	Timeout         = 30 * time.Second
+	Timeout         time.Duration
 )
 
 type urlJSONProvider struct {
@@ -76,6 +76,8 @@ func (p *urlJSONProvider) init(src string) error {
 		},
 	}
 
+	log.Debugf("http client initialized with timeout %v", Timeout)
+
 	return nil
 }
 
@@ -116,9 +118,13 @@ func (p urlJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) 
 
 	log.Debugf("Successfully written %d bytes to buffer", n)
 
-	jsc, err := prepareUpdateJSONObject(jsonFileData.Bytes())
+	uj, err := prepareUpdateJSONObject(jsonFileData.Bytes())
 	if err != nil {
 		return nil, nil, err
+	}
+
+	if err = uj.VerifySignature(); err != nil {
+		return nil, nil, errors.Wrap(err, "Signature of original update-center.json invalid")
 	}
 
 	meta, err := p.getRemoteURLMetadata(resp)
@@ -126,7 +132,7 @@ func (p urlJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) 
 		return nil, nil, err
 	}
 
-	return jsc, meta, nil
+	return uj, meta, nil
 }
 
 //func (p urlJSONProvider) getMetadata() (*JSONMetadataT, error) {

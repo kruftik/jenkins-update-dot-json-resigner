@@ -20,6 +20,7 @@ import (
 
 type JenkinsLocationOpts struct {
 	Src            string
+	Timeout        time.Duration
 	IsRemoteSource bool
 }
 
@@ -102,6 +103,7 @@ func NewJenkinsUC(opts JenkinsUCOpts) (*JenkinsUCJSONT, error) {
 	)
 
 	if opts.Src.IsRemoteSource {
+		Timeout = opts.Src.Timeout
 		origContentProvider, err = NewURLJSONProvider(opts.Src.Src)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot initialize URLJSONProvider")

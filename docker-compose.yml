@@ -22,6 +22,8 @@ services:
 
       UPDATE_JSON_URL: http://updates.jenkins.io/update-center.json
 
+      UPDATE_JSON_DOWNLOAD_TIMEOUT: 90s
+
       UPDATE_JSON_CACHE_TTL: 30m
 
       ORIGIN_DOWNLOAD_URL: http://updates.jenkins-ci.org/download/

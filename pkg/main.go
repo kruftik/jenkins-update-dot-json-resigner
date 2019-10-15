@@ -30,6 +30,8 @@ var (
 		UpdateJSONPath string `long:"update-json-path"  env:"UPDATE_JSON_PATH"`
 		UpdateJSONURL  string `long:"update-json-url" env:"UPDATE_JSON_URL"`
 
+		UpdateJSONDownloadTimeout time.Duration `long:"timeout" env:"UPDATE_JSON_DOWNLOAD_TIMEOUT" default:"30s"`
+
 		UpdateJSONCacheTTL time.Duration `long:"cache-ttl" env:"UPDATE_JSON_CACHE_TTL" default:"30m"`
 
 		OriginDownloadURL string `long:"origin-download-uri" env:"ORIGIN_DOWNLOAD_URL" default:"http://updates.jenkins-ci.org/"`

@@ -75,7 +75,16 @@ func GetJSONPString(juc *UpdateJSON) ([]byte, error) {
 }
 
 func getUnsignedJSON(signedObj UpdateJSON) ([]byte, error) {
-	c := InsecureUpdateJSON(signedObj)
+	var (
+		c = InsecureUpdateJSON(signedObj)
+		//
+		//bt  bytes.Buffer
+		//enc = json.NewEncoder(&bt)
+	)
+
+	//enc.SetEscapeHTML(false)
+	//
+	//err := enc.Encode(c)
 
 	data, err := cjson.Marshal(c)
 	if err != nil {
@@ -86,5 +95,16 @@ func getUnsignedJSON(signedObj UpdateJSON) ([]byte, error) {
 }
 
 func (jsonData *InsecureUpdateJSON) GetBytes() ([]byte, error) {
-	return cjson.Marshal(*jsonData)
+	//var (
+	//	bt  bytes.Buffer
+	//	enc = json.NewEncoder(&bt)
+	//)
+	//enc.SetEscapeHTML(false)
+	//
+	//err := enc.Encode(jsonData)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	return cjson.Marshal(jsonData)
 }
