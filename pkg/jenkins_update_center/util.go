@@ -74,6 +74,20 @@ func GetJSONPString(juc *UpdateJSON) ([]byte, error) {
 	return jsonp, nil
 }
 
+func GetHTMLString(juc *UpdateJSON) ([]byte, error) {
+	in, err := cjson.Marshal(juc)
+	if err != nil {
+		return nil, err
+	}
+
+	html := make([]byte, 0, len(wrappedJSONPrefix)+len(in)+len(wrappedJSONPostfix))
+	html = append(html, []byte("<!DOCTYPE html><html><head><meta http-equiv='Content-Type' content='text/html;charset=UTF-8' /></head><body><script>window.onload = function () { window.parent.postMessage(JSON.stringify(\n")...)
+	html = append(html, in...)
+	html = append(html, []byte("\n),'*'); };</script></body></html>")...)
+
+	return html, nil
+}
+
 func getUnsignedJSON(signedObj UpdateJSON) ([]byte, error) {
 	var (
 		c = InsecureUpdateJSON(signedObj)

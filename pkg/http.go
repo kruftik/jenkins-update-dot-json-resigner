@@ -60,7 +60,7 @@ func initHTTP(juc *jenkins_update_center.JenkinsUCJSONT) (*chi.Mux, error) {
 		r.Get("/*", proxy.ServeHTTP)
 
 		r.Get(UpdateCenterDotJSON, func(w http.ResponseWriter, r *http.Request) {
-			c, err := juc.GetPatchedAndSigned()
+			c, err := juc.GetPatchedAndSignedJSONP()
 			if err != nil {
 				log.Warn(err)
 				return
@@ -70,6 +70,24 @@ func initHTTP(juc *jenkins_update_center.JenkinsUCJSONT) (*chi.Mux, error) {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("Content-Length", cl)
 			w.Header().Set("Etag", "update-center-json-"+cl)
+
+			if _, err = w.Write(c); err != nil {
+				log.Warn(err)
+				return
+			}
+		})
+
+		r.Get(UpdateCenterDotHTML, func(w http.ResponseWriter, r *http.Request) {
+			c, err := juc.GetPatchedAndSignedHTML()
+			if err != nil {
+				log.Warn(err)
+				return
+			}
+
+			cl := strconv.Itoa(len(c))
+			w.Header().Set("Content-Type", "text/html")
+			w.Header().Set("Content-Length", cl)
+			w.Header().Set("Etag", "update-center-json-html-"+cl)
 
 			if _, err = w.Write(c); err != nil {
 				log.Warn(err)

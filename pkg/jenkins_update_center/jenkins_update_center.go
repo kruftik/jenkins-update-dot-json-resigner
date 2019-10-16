@@ -29,7 +29,7 @@ type JenkinsPatchOpts struct {
 	To   string
 }
 
-type patchedJSONP struct {
+type patchedFilesStoreT struct {
 	mu sync.RWMutex
 	f  string
 }
@@ -49,7 +49,7 @@ type JenkinsUCJSONT struct {
 	c *PatchedJSONProvider
 
 	/*caches map[string]*cachedEntryT*/
-	patchedJSONP patchedJSONP
+	patchedFiles patchedFilesStoreT
 }
 
 var (
@@ -115,24 +115,25 @@ func NewJenkinsUC(opts JenkinsUCOpts) (*JenkinsUCJSONT, error) {
 		}
 	}
 
-	tf, err := ioutil.TempFile("", "update-center.patched.json")
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot create update-center.patched.json temp file")
+	//tf, err := ioutil.TempFile("", "update-center.patched.json")
+	//if err != nil {
+	//	return nil, errors.Wrap(err, "cannot create update-center.patched.json temp file")
+	//}
+
+	//log.Info("Created update-center.json temp file: ", tf.Name())
+
+	juc.patchedFiles = patchedFilesStoreT{
+		f: "/tmp/update-center.patched.json",
 	}
 
-	log.Info("Created update-center.json temp file: ", tf.Name())
-
-	juc.patchedJSONP = patchedJSONP{
-		f: tf.Name(),
-	}
-
-	juc.patchedJSONP.mu.Lock()
 	defer func() {
-		if err := tf.Close(); err != nil {
-			log.Error(errors.Wrap(err, "cannot close update-center.patched.json temp file"))
-		}
+		juc.patchedFiles.mu.Lock()
 
-		juc.patchedJSONP.mu.Unlock()
+		//if err := tf.Close(); err != nil {
+		//	log.Error(errors.Wrap(err, "cannot close update-center.patched.json temp file"))
+		//}
+
+		juc.patchedFiles.mu.Unlock()
 	}()
 
 	juc.c, err = NewPatchedJSONProvider(origContentProvider, opts.CacheTtl, opts.PatchOpts, opts.SigningInfo)
@@ -140,16 +141,20 @@ func NewJenkinsUC(opts JenkinsUCOpts) (*JenkinsUCJSONT, error) {
 	return juc, nil
 }
 
-func (juc *JenkinsUCJSONT) GetPatchedAndSigned() ([]byte, error) {
+func (juc *JenkinsUCJSONT) GetPatchedAndSignedJSONP() ([]byte, error) {
+	cacheFileName := juc.patchedFiles.f
+
 	isUpdated, err := juc.c.IsContentUpdated()
 	if err != nil {
 		return nil, err
 	}
 
 	if isUpdated {
-		juc.patchedJSONP.mu.Lock()
+		log.Info("JSONP file cache expired, trying to update...")
 
-		fd, err := os.Create(juc.patchedJSONP.f)
+		juc.patchedFiles.mu.Lock()
+
+		fd, err := os.Create(cacheFileName)
 		if err != nil {
 			return nil, err
 		}
@@ -177,28 +182,86 @@ func (juc *JenkinsUCJSONT) GetPatchedAndSigned() ([]byte, error) {
 			return nil, err
 		}
 
-		juc.patchedJSONP.mu.Unlock()
+		juc.patchedFiles.mu.Unlock()
+
+		log.Debug("JSONP file cache expired, trying to update... [done]")
 	} else {
 		log.Debugf("Original content not changed, using on-disk cache")
 	}
 
-	juc.patchedJSONP.mu.RLock()
+	juc.patchedFiles.mu.RLock()
 	defer func() {
-		juc.patchedJSONP.mu.RUnlock()
+		juc.patchedFiles.mu.RUnlock()
 	}()
 
-	return ioutil.ReadFile(juc.patchedJSONP.f)
+	return ioutil.ReadFile(cacheFileName)
+}
+
+func (juc *JenkinsUCJSONT) GetPatchedAndSignedHTML() ([]byte, error) {
+	cacheFileName := juc.patchedFiles.f + ".html"
+
+	isUpdated, err := juc.c.IsContentUpdated()
+	if err != nil {
+		return nil, err
+	}
+
+	if isUpdated {
+		log.Info("HTML file cache expired, trying to update...")
+
+		juc.patchedFiles.mu.Lock()
+
+		fd, err := os.Create(cacheFileName)
+		if err != nil {
+			return nil, err
+		}
+
+		c, meta, err := juc.c.GetContent()
+		if err != nil {
+			return nil, err
+		}
+
+		if _, err = juc.c.RefreshMetadata(meta); err != nil {
+			log.Error(err)
+			return nil, err
+		}
+
+		html, err := GetHTMLString(c)
+		if err != nil {
+			log.Error(err)
+			return nil, err
+		}
+		if _, err := fd.Write(html); err != nil {
+			return nil, err
+		}
+
+		if err := fd.Close(); err != nil {
+			return nil, err
+		}
+
+		juc.patchedFiles.mu.Unlock()
+
+		log.Debug("HTML file cache expired, trying to update... [done]")
+	} else {
+		log.Debugf("Original content not changed, using on-disk cache")
+	}
+
+	juc.patchedFiles.mu.RLock()
+	defer func() {
+		juc.patchedFiles.mu.RUnlock()
+	}()
+
+	return ioutil.ReadFile(cacheFileName)
 }
 
 func (juc *JenkinsUCJSONT) Cleanup() {
 	log.Info("Cleaning up temp file...")
 
-	juc.patchedJSONP.mu.Lock()
+	juc.patchedFiles.mu.Lock()
 	defer func() {
-		juc.patchedJSONP.mu.Unlock()
+		juc.patchedFiles.mu.Unlock()
 	}()
 
-	if err := os.Remove(juc.patchedJSONP.f); err != nil {
+	if err := os.Remove(juc.patchedFiles.f); err != nil {
 		log.Warn(err)
 	}
 }
