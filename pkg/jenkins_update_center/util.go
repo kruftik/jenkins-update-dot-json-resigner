@@ -2,6 +2,8 @@ package jenkins_update_center
 
 import (
 	"bytes"
+	"os"
+
 	//"encoding/json"
 
 	//"encoding/json"
@@ -121,4 +123,14 @@ func (jsonData *InsecureUpdateJSON) GetBytes() ([]byte, error) {
 	//}
 
 	return cjson.Marshal(jsonData)
+}
+
+func IsFileExists(path string) bool {
+	info, err := os.Stat(path)
+
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return !info.IsDir()
 }

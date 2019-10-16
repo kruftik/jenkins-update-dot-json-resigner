@@ -126,9 +126,8 @@ func NewJenkinsUC(opts JenkinsUCOpts) (*JenkinsUCJSONT, error) {
 		f: "/tmp/update-center.patched.json",
 	}
 
+	juc.patchedFiles.mu.Lock()
 	defer func() {
-		juc.patchedFiles.mu.Lock()
-
 		//if err := tf.Close(); err != nil {
 		//	log.Error(errors.Wrap(err, "cannot close update-center.patched.json temp file"))
 		//}
@@ -149,7 +148,7 @@ func (juc *JenkinsUCJSONT) GetPatchedAndSignedJSONP() ([]byte, error) {
 		return nil, err
 	}
 
-	if isUpdated {
+	if isUpdated || !IsFileExists(cacheFileName) {
 		log.Info("JSONP file cache expired, trying to update...")
 
 		juc.patchedFiles.mu.Lock()
@@ -205,7 +204,7 @@ func (juc *JenkinsUCJSONT) GetPatchedAndSignedHTML() ([]byte, error) {
 		return nil, err
 	}
 
-	if isUpdated {
+	if isUpdated || !IsFileExists(cacheFileName) {
 		log.Info("HTML file cache expired, trying to update...")
 
 		juc.patchedFiles.mu.Lock()
@@ -261,7 +260,7 @@ func (juc *JenkinsUCJSONT) Cleanup() {
 		juc.patchedFiles.mu.Unlock()
 	}()
 
-	if err := os.Remove(juc.patchedFiles.f); err != nil {
-		log.Warn(err)
+	for _, f := range []string{juc.patchedFiles.f, juc.patchedFiles.f + ".html"} {
+		_ = os.Remove(f)
 	}
 }
