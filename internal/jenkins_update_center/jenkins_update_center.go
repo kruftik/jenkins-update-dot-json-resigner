@@ -56,8 +56,8 @@ var (
 	log *zap.SugaredLogger
 )
 
-func Init() {
-	log = zap.S()
+func Init(llog *zap.SugaredLogger) {
+	log = llog
 }
 
 func ValidateUpdateJSONLocation(jsonURL, jsonPath string) (opts *JenkinsLocationOpts, err error) {

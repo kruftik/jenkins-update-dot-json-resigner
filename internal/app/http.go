@@ -1,10 +1,12 @@
-package main
+package app
 
 import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	l "github.com/treastech/logger"
-	"jenkins-resigner-service/pkg/jenkins_update_center"
+	"go.uber.org/zap"
+
+	"jenkins-resigner-service/internal/jenkins_update_center"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -12,6 +14,8 @@ import (
 	"time"
 
 	"net/http/pprof"
+
+	"jenkins-resigner-service/internal/config"
 )
 
 const (
@@ -19,7 +23,7 @@ const (
 )
 
 func initProxy() (*httputil.ReverseProxy, error) {
-	originURL, err := url.ParseRequestURI(Opts.NewDownloadURL)
+	originURL, err := url.ParseRequestURI(config.Opts.NewDownloadURL)
 	if err != nil {
 		log.Warn("origin URL is incorrect: ", err)
 		return nil, err
@@ -30,7 +34,7 @@ func initProxy() (*httputil.ReverseProxy, error) {
 	return proxy, nil
 }
 
-func initHTTP(juc *jenkins_update_center.JenkinsUCJSONT) (*chi.Mux, error) {
+func initHTTP(logger *zap.Logger, juc *jenkins_update_center.JenkinsUCJSONT) (*chi.Mux, error) {
 	log.Info("Running http server... ")
 
 	r := chi.NewRouter()

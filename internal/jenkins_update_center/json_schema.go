@@ -31,6 +31,7 @@ type Plugin struct {
 	Labels                 []string       `json:"labels"`
 	MinimumJavaVersion     string         `json:"minimumJavaVersion,omitempty"`
 	Name                   string         `json:"name"`
+	Popularity             int            `json:"popularity"`
 	PreviousTimestamp      string         `json:"previousTimestamp,omitempty"`
 	PreviousVersion        string         `json:"previousVersion,omitempty"`
 	ReleaseTimestamp       string         `json:"releaseTimestamp,omitempty"`
@@ -47,15 +48,19 @@ type Plugin struct {
 type Plugins map[string]Plugin
 
 type Signature struct {
-	Certificates        []string `json:"certificates"`
-	CorrectDigest       string   `json:"correct_digest"`
-	CorrectDigest512    string   `json:"correct_digest512"`
-	CorrectSignature    string   `json:"correct_signature"`
-	CorrectSignature512 string   `json:"correct_signature512"`
-	Digest              string   `json:"digest"`
-	Digest512           string   `json:"digest512"`
-	Signature           string   `json:"signature"`
-	Signature512        string   `json:"signature512"`
+	Certificates []string `json:"certificates"`
+
+	CorrectDigest    string `json:"correct_digest"`
+	CorrectDigest512 string `json:"correct_digest512"`
+
+	CorrectSignature    string `json:"correct_signature"`
+	CorrectSignature512 string `json:"correct_signature512"`
+
+	// incorrect digest and signatures are not included anymore
+	//Digest              string   `json:"digest"`
+	//Digest512           string   `json:"digest512"`
+	//Signature           string   `json:"signature"`
+	//Signature512        string   `json:"signature512"`
 }
 
 //type Versions struct {
@@ -73,21 +78,23 @@ type Signature struct {
 //}
 
 type UpdateJSON struct {
-	ConnectionCheckURL  string        `json:"connectionCheckUrl"`
-	Core                Core          `json:"core"`
-	ID                  string        `json:"id"`
-	Plugins             Plugins       `json:"plugins"`
-	Signature           Signature     `json:"signature"`
-	UpdateCenterVersion string        `json:"updateCenterVersion"`
-	Warnings            []interface{} `json:"warnings"`
+	ConnectionCheckURL  string                 `json:"connectionCheckUrl"`
+	Core                Core                   `json:"core"`
+	Deprecations        map[string]interface{} `json:"deprecations"`
+	ID                  string                 `json:"id"`
+	Plugins             Plugins                `json:"plugins"`
+	Signature           Signature              `json:"signature"`
+	UpdateCenterVersion string                 `json:"updateCenterVersion"`
+	Warnings            []interface{}          `json:"warnings"`
 }
 
 type InsecureUpdateJSON struct {
-	ConnectionCheckURL  string        `json:"connectionCheckUrl"`
-	Core                Core          `json:"core"`
-	ID                  string        `json:"id"`
-	Plugins             Plugins       `json:"plugins"`
-	Signature           Signature     `json:"-"`
-	UpdateCenterVersion string        `json:"updateCenterVersion"`
-	Warnings            []interface{} `json:"warnings"`
+	ConnectionCheckURL  string                 `json:"connectionCheckUrl"`
+	Core                Core                   `json:"core"`
+	Deprecations        map[string]interface{} `json:"deprecations"`
+	ID                  string                 `json:"id"`
+	Plugins             Plugins                `json:"plugins"`
+	Signature           Signature              `json:"-"`
+	UpdateCenterVersion string                 `json:"updateCenterVersion"`
+	Warnings            []interface{}          `json:"warnings"`
 }

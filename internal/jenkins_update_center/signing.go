@@ -61,10 +61,11 @@ func (sc JSONSignatureComponents) GetSignatureObject(roots *x509.CertPool, cert 
 		CorrectDigest512:    sc.GetDigest512(),
 		CorrectSignature:    sc.GetSignature1(),
 		CorrectSignature512: sc.GetSignature512(),
-		Digest:              "",
-		Digest512:           "",
-		Signature:           "",
-		Signature512:        "",
+		// incorrect digest and signatures are not included anymore
+		//Digest:              "",
+		//Digest512:           "",
+		//Signature:           "",
+		//Signature512:        "",
 	}
 }
 
@@ -168,12 +169,12 @@ func (uj UpdateJSON) GetCertificates() ([]x509.Certificate, error) {
 	for idx, crtBase64 := range sign.Certificates {
 		crtBytes, err = base64.StdEncoding.DecodeString(crtBase64)
 		if err != nil {
-			return nil, fmt.Errorf("cannot decode '%s' as base64: %s", crtBase64, err)
+			return nil, fmt.Errorf("cannot decode '%s' as base64: %w", crtBase64, err)
 		}
 
 		crt, err := x509.ParseCertificate(crtBytes)
 		if err != nil {
-			return nil, fmt.Errorf("cannot parse '%s' as x509 cert: %s", crtBase64, err)
+			return nil, fmt.Errorf("cannot parse '%s' as x509 cert: %w", crtBase64, err)
 		}
 
 		certs[idx] = *crt
@@ -222,7 +223,7 @@ func (uj UpdateJSON) VerifySignature() error {
 
 	certificates, err := uj.GetCertificates()
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot extract certificates from json-file: %w", err)
 	}
 
 	if len(certificates) < 1 {
@@ -235,11 +236,14 @@ func (uj UpdateJSON) VerifySignature() error {
 		return err
 	}
 
+	//fmt.Println(string(jsonData))
+	//fmt.Println(string(jsonData))
+
 	// SHA512...
 	shaXDigest = getDigestSHA512(jsonData)
 	if !isDigestsMatch(shaXDigest, uj.Signature.CorrectDigest512) {
-		fmt.Print(string(jsonData[:128]) + "\n")
-		fmt.Print(string(jsonData[len(jsonData)-129:]) + "\n")
+		//fmt.Print(string(jsonData[:128]) + "\n")
+		//fmt.Print(string(jsonData[len(jsonData)-129:]) + "\n")
 		return fmt.Errorf("provided and computed SHA512 digests are different")
 	}
 	log.Debug("SHA512 digests match")

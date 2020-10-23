@@ -59,6 +59,13 @@ func prepareUpdateJSONObject(src []byte) (*UpdateJSON, error) {
 		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %s", err)
 	}
 
+	//var ujif interface{}
+	//
+	//err = cjson.Unmarshal(jsonStr, ujif)
+	//if err != nil {
+	//	return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %s", err)
+	//}
+
 	return uj, nil
 }
 

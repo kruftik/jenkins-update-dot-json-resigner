@@ -124,7 +124,7 @@ func (p urlJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) 
 	}
 
 	if err = uj.VerifySignature(); err != nil {
-		return nil, nil, errors.Wrap(err, "Signature of original update-center.json invalid")
+		return nil, nil, fmt.Errorf("signature of original update-center.json is not valid: %w", err)
 	}
 
 	meta, err := p.getRemoteURLMetadata(resp)
