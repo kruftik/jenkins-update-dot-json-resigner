@@ -30,7 +30,7 @@ jobs:
 #        run: go test -v ./internal/kubernetes/...
 
       - name: Login in Docker registry
-        run: docker login --username ${DOCKER_REGISTRY_USER} --password "${DOCKER_REGISTRY_TOKEN}"
+        run: docker login --u"${DOCKER_REGISTRY_USER}" --p"${DOCKER_REGISTRY_TOKEN}"
 
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag ${DOCKER_IMAGE}:latest
