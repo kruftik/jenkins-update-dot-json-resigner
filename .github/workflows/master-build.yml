@@ -29,11 +29,11 @@ jobs:
 #      - name: Test
 #        run: go test -v ./internal/kubernetes/...
 
-      - name: Login in Docker registry
-        run: docker login --u"${DOCKER_REGISTRY_USER}" --p"${DOCKER_REGISTRY_TOKEN}"
-
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag ${DOCKER_IMAGE}:latest
+
+      - name: Login in Docker registry
+        run: docker login -u"${DOCKER_REGISTRY_USER}" -p"${DOCKER_REGISTRY_TOKEN}"
 
       - name: Push Docker image to registry
         run: docker push ${DOCKER_IMAGE}:latest
