@@ -1,4 +1,4 @@
-FROM golang:1.12-alpine as builder
+FROM golang:1.15-alpine as builder
 
 WORKDIR /src/app
 COPY  . .
@@ -24,7 +24,7 @@ RUN upx -q /app && \
 
 # ---
 
-FROM alpine:3.9
+FROM alpine:latest
 
 WORKDIR /
 

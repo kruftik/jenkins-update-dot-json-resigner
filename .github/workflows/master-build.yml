@@ -1,0 +1,39 @@
+name: Master Build
+
+on:
+  push:
+    branches: [ master ]
+#    paths:
+#      - '.github/workflows/master-build.yml'
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  master-build:
+    #    name: build the app and image
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_IMAGE: kruft/jenkins-update-dot-json-resigner
+
+    steps:
+      - name: Set up Go 1.15
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+#      - name: Test
+#        run: go test -v ./internal/kubernetes/...
+
+      - name: Login in Docker registry
+        run: echo "${DOCKER_REGISTRY_TOKEN}" | docker login --username ${DOCKER_REGISTRY_USER} --password-stdin
+
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag ${DOCKER_IMAGE}:latest
+
+      - name: Push Docker image to registry
+        run: docker push ${DOCKER_IMAGE}:latest
