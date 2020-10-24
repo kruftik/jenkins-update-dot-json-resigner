@@ -53,8 +53,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ${DOCKER_IMAGE}:latest
-          cache-from: type=registry,ref=${DOCKER_IMAGE}:latest
+            ${{ env.DOCKER_IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:latest
           cache-to: type=inline
 #            ghcr.io/${GITHUB_REPOSITORY}:latest
 
