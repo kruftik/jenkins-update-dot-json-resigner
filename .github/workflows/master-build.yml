@@ -1,10 +1,11 @@
-name: Master Build
+name: Prepare and Push Container Image
 
 on:
   push:
-    branches: [ master ]
-#    paths:
-#      - '.github/workflows/master-build.yml'
+    branches:
+      - '**'
+    tags:
+      - 'v*.*'
   pull_request:
     branches: [ master ]
 
@@ -26,6 +27,39 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
+      - name: Prepare
+        id: prep
+        run: |
+          VERSION=noop
+
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            VERSION=nightly
+          elif [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          elif [[ $GITHUB_REF == refs/heads/* ]]; then
+            VERSION=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
+
+            if [ "${{ github.event.repository.default_branch }}" = "$VERSION" ]; then
+              VERSION=edge
+            fi
+          elif [[ $GITHUB_REF == refs/pull/* ]]; then
+            VERSION=pr-${{ github.event.number }}
+          fi
+
+          TAGS="${DOCKER_IMAGE}:${VERSION}"
+
+          if [[ $VERSION =~ ^v[0-9]{1,3}\.[0-9]{1,3}.*$ ]]; then
+            MINOR=${VERSION%.*}
+            MAJOR=${MINOR%.*}
+            TAGS="$TAGS,${DOCKER_IMAGE}:${MINOR},${DOCKER_IMAGE}:${MAJOR},${DOCKER_IMAGE}:latest"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            TAGS="$TAGS,${DOCKER_IMAGE}:sha-${GITHUB_SHA::8}"
+          fi
+
+          echo ::set-output name=version::${VERSION}
+          echo ::set-output name=tags::${TAGS}
+          echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
 #      - name: Test
 #        run: go test -v ./internal/kubernetes/...
 
@@ -38,32 +72,12 @@ jobs:
           username: ${{ secrets.DOCKER_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
 
-#      - name: Login to GitHub Container Registry
-#        uses: docker/login-action@v1
-#        with:
-#          registry: ghcr.io
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build and push image
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ env.DOCKER_IMAGE }}:latest
-          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:latest
-          cache-to: type=inline
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.prep.outputs.tags }}
 #            ghcr.io/${GITHUB_REPOSITORY}:latest
-
-
-#      - name: Build the Docker image
-#        run: docker build . --file Dockerfile --tag ${DOCKER_IMAGE}:latest
-
-#      - name: Login in Docker registry
-#        run: docker login -u"${DOCKER_REGISTRY_USER}" -p"${DOCKER_REGISTRY_TOKEN}"
-
-#      - name: Push Docker image to registry
-#        run: docker push ${DOCKER_IMAGE}:latest
