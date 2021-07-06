@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -236,8 +237,16 @@ func (uj UpdateJSON) VerifySignature() error {
 		return err
 	}
 
-	//fmt.Println(string(jsonData))
-	//fmt.Println(string(jsonData))
+	f, err := os.Create("/tmp/update-center-parsed.json")
+	if err != nil {
+		return fmt.Errorf("cannot open file for writing: %w", err)
+	}
+	_, err = f.Write(jsonData)
+	if err != nil {
+		return fmt.Errorf("cannot write to output file: %w", err)
+	}
+
+	f.Close()
 
 	// SHA512...
 	shaXDigest = getDigestSHA512(jsonData)
