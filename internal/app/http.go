@@ -6,12 +6,13 @@ import (
 	l "github.com/treastech/logger"
 	"go.uber.org/zap"
 
-	"jenkins-resigner-service/internal/jenkins_update_center"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"time"
+
+	"jenkins-resigner-service/internal/jenkins_update_center"
 
 	"net/http/pprof"
 
@@ -97,6 +98,14 @@ func initHTTP(logger *zap.Logger, juc *jenkins_update_center.JenkinsUCJSONT) (*c
 				log.Warn(err)
 				return
 			}
+		})
+
+		r.Get("/updates/hudson.tasks.*", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		})
+
+		r.Get("/updates/hudson.tools.*", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
 		})
 	})
 

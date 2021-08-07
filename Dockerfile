@@ -4,11 +4,10 @@ WORKDIR /src/app
 COPY  . .
 #COPY .git ./
 
-RUN apk add --no-cache \
-        git \
+RUN apk add --no-cache git 
 #        tzdata \
 #        ca-certificates \
-        upx
+#        upx
 
 #RUN go get -u github.com/semrush/zenrpc/zenrpc \
 #    && go generate .
@@ -19,8 +18,8 @@ RUN GIT_COMMIT=$(git rev-list -1 HEAD --) && \
     GOARCH=amd64 \
         go build -ldflags="-X main.GitCommit=${GIT_COMMIT} -w -s" -mod vendor -o /app ./cmd
 
-RUN upx -q /app && \
-    upx -t /app
+#RUN upx -q /app && \
+#    upx -t /app
 
 # ---
 
