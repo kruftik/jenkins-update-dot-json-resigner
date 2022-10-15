@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"go.uber.org/zap"
 	"jenkins-resigner-service/internal/config"
 	"jenkins-resigner-service/internal/logging"
+	"jenkins-resigner-service/internal/server/middleware"
+	"jenkins-resigner-service/internal/services/httpproxy"
 	"jenkins-resigner-service/internal/services/update_center"
 )
 
@@ -112,12 +114,14 @@ func (s *Server) SetupRoutes() http.Handler {
 }
 
 func (s *Server) internalRoutes(ctx context.Context) error {
-	s.router.Use(middleware.Heartbeat("/healthz"))
+	s.router.Use(chimiddleware.Heartbeat("/healthz"))
 
-	s.router.Use(middleware.RealIP)
-	s.router.Use(middleware.Recoverer)
+	s.router.Use(middleware.Logger(s.log.Desugar()))
 
-	s.router.Use(middleware.Timeout(timeoutTotal))
+	s.router.Use(chimiddleware.RealIP)
+	s.router.Use(chimiddleware.Recoverer)
+
+	s.router.Use(chimiddleware.Timeout(timeoutTotal))
 
 	// Регистрация pprof-обработчиков
 	s.router.HandleFunc("/debug/pprof/", pprof.Index)
@@ -126,9 +130,12 @@ func (s *Server) internalRoutes(ctx context.Context) error {
 	s.router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	s.router.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
-	//s.router.Use(s.l.Logger(logger))
+	proxy, err := httpproxy.NewHTTPProxy(config.Opts.OriginDownloadURL)
+	if err != nil {
+		return fmt.Errorf("cannot init http proxy: %w to upstream", err)
+	}
 
-	//s.router.Get("/*", initProxy())
+	s.router.Get("/*", proxy.ServeHTTP)
 
 	return nil
 }
