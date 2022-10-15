@@ -64,10 +64,11 @@ func (p *urlJSONProvider) init(src string) error {
 	p.metadata = &JSONMetadataT{}
 
 	p.hc = &http.Client{
-		Transport: &http.Transport{
-			MaxIdleConns:    MaxIdleConns,
-			IdleConnTimeout: IdleConnTimeout * time.Second,
-		},
+		// TODO: something goes wrong with this settings
+		//Transport: &http.Transport{
+		//	MaxIdleConns:    MaxIdleConns,
+		//	IdleConnTimeout: IdleConnTimeout * time.Second,
+		//},
 		Timeout: Timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			//l := len(via)
