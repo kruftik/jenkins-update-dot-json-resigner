@@ -1,4 +1,4 @@
-package jenkins_update_center
+package update_center
 
 import (
 	"bytes"
@@ -20,7 +20,7 @@ type urlJSONProvider struct {
 	url      *url.URL
 	metadata *JSONMetadataT
 
-	content *UpdateJSON
+	content *SignedUpdatedJSON
 
 	hc *http.Client
 }
@@ -97,7 +97,7 @@ func (p urlJSONProvider) getRemoteURLMetadata(r *http.Response) (*JSONMetadataT,
 	return meta, nil
 }
 
-func (p urlJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) {
+func (p urlJSONProvider) GetFreshContent() (*SignedUpdatedJSON, *JSONMetadataT, error) {
 	log.Infof("Downloading %s...", p.url)
 
 	resp, err := p.hc.Get(p.url.String())
@@ -189,7 +189,7 @@ func (p *urlJSONProvider) IsContentUpdated() (bool, error) {
 	return isUpdated, nil
 }
 
-func (p *urlJSONProvider) GetContent() (*UpdateJSON, *JSONMetadataT, error) {
+func (p *urlJSONProvider) GetContent() (*SignedUpdatedJSON, *JSONMetadataT, error) {
 	isUpdated, err := p.IsContentUpdated()
 	if err != nil {
 		return nil, nil, err

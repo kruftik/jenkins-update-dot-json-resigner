@@ -1,4 +1,4 @@
-package jenkins_update_center
+package update_center
 
 import (
 	"time"
@@ -16,12 +16,12 @@ type JSONMetadataT struct {
 }
 
 type JSONProvider interface {
-	GetFreshContent() (*UpdateJSON, *JSONMetadataT, error)
+	GetFreshContent() (*SignedUpdatedJSON, *JSONMetadataT, error)
 	GetFreshMetadata() (*JSONMetadataT, error)
 
 	RefreshMetadata(*JSONMetadataT) (*JSONMetadataT, error)
 
-	GetContent() (*UpdateJSON, *JSONMetadataT, error)
+	GetContent() (*SignedUpdatedJSON, *JSONMetadataT, error)
 
 	IsContentUpdated() (bool, error)
 }

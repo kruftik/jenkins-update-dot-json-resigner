@@ -1,10 +1,11 @@
-package jenkins_update_center
+package update_center
 
 import (
-	"github.com/pkg/errors"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type cacheEntry struct {
@@ -31,7 +32,7 @@ type PatchedJSONProvider struct {
 }
 
 //type patchedCacheEntry struct {
-//	content  *UpdateJSON
+//	content  *SignedUpdatedJSON
 //	metadata *JSONMetadataT
 //}
 
@@ -100,10 +101,10 @@ func NewPatchedJSONProvider(orig JSONProvider, cacheTtl time.Duration, patchOpts
 	return p, nil
 }
 
-func (p *PatchedJSONProvider) patchContent(signedOrig *UpdateJSON) (*InsecureUpdateJSON, error) {
+func (p *PatchedJSONProvider) patchContent(signedOrig *SignedUpdatedJSON) (*UnsignedUpdateJSON, error) {
 	log.Info("Patching JSONp content...")
 
-	c := InsecureUpdateJSON(*signedOrig)
+	c := UnsignedUpdateJSON(*signedOrig)
 
 	// Patch URL in Core section
 	c.Core.URL = strings.ReplaceAll(c.Core.URL, p.patchOpts.From, p.patchOpts.To)
@@ -123,7 +124,7 @@ func (p *PatchedJSONProvider) patchContent(signedOrig *UpdateJSON) (*InsecureUpd
 	return &c, nil
 }
 
-func (p PatchedJSONProvider) signContent(c *InsecureUpdateJSON) (*UpdateJSON, error) {
+func (p PatchedJSONProvider) signContent(c *UnsignedUpdateJSON) (*SignedUpdatedJSON, error) {
 	log.Info("Signing JSONp content...")
 
 	signature, err := p.signingOpts.SignJSONData(c)
@@ -131,14 +132,14 @@ func (p PatchedJSONProvider) signContent(c *InsecureUpdateJSON) (*UpdateJSON, er
 		return nil, err
 	}
 
-	signedObj := UpdateJSON(*c)
+	signedObj := SignedUpdatedJSON(*c)
 	signedObj.Signature = *signature
 
 	log.Debug("Signing JSONp content [done]")
 	return &signedObj, nil
 }
 
-func (p *PatchedJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) {
+func (p *PatchedJSONProvider) GetFreshContent() (*SignedUpdatedJSON, *JSONMetadataT, error) {
 	c, meta, err := p.orig.GetContent()
 	if err != nil {
 		return nil, nil, err
@@ -215,7 +216,7 @@ func (p PatchedJSONProvider) IsContentUpdated() (bool, error) {
 
 }
 
-func (p PatchedJSONProvider) GetContent() (*UpdateJSON, *JSONMetadataT, error) {
+func (p PatchedJSONProvider) GetContent() (*SignedUpdatedJSON, *JSONMetadataT, error) {
 	//cEntry, err := p.cache.Get()
 	//if err != nil {
 	//	return nil, nil, err

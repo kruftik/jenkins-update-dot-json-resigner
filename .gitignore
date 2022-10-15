@@ -1,6 +1,8 @@
-build
-jenkins_home
-.idea
-nginx_home
-jsons
+build/
+jenkins_home/
+.idea/
+nginx_home/
+jsons/
+tmp/
+
 

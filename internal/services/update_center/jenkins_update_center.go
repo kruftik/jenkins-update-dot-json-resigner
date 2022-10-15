@@ -1,14 +1,15 @@
-package jenkins_update_center
+package update_center
 
 import (
 	//"bytes"
 	//"encoding/json"
 	//"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"sync"
+
+	"github.com/pkg/errors"
 
 	//"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"time"
@@ -17,6 +18,11 @@ import (
 	"go.uber.org/zap"
 	//"sync"
 )
+
+type IJenkinsUpdateCenterPatcher interface {
+	GetPatchedAndSignedJSONP() ([]byte, error)
+	GetPatchedAndSignedHTML() ([]byte, error)
+}
 
 type JenkinsLocationOpts struct {
 	Src            string

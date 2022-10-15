@@ -1,15 +1,14 @@
 package app
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
+	"jenkins-resigner-service/internal/logging"
+	"jenkins-resigner-service/internal/server"
 
-	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"jenkins-resigner-service/internal/config"
@@ -20,34 +19,36 @@ import (
 	//
 	//"github.com/jessevdk/go-flags"
 	//"go.uber.org/zap"
-	"jenkins-resigner-service/internal/jenkins_update_center"
+	"jenkins-resigner-service/internal/services/update_center"
 	//"time"
 )
 
 var (
-	log *zap.SugaredLogger
-
 	//updateJSON *UpdateJSONT
-	juc *jenkins_update_center.JenkinsUCJSONT
+	juc *update_center.JenkinsUCJSONT
 )
 
-func App(logger *zap.Logger) error {
-	zap.ReplaceGlobals(logger)
-	log = zap.S()
+func App() error {
+	var (
+		log = logging.GetLogger()
+	)
 
-	jenkins_update_center.Init(log)
+	ctx, cancelFn := context.WithCancel(context.Background())
+	defer cancelFn()
 
-	signInfo, err := jenkins_update_center.ParseSigningParameters(
+	update_center.Init(log)
+
+	signInfo, err := update_center.ParseSigningParameters(
 		config.Opts.SignCAPath,
 		config.Opts.SignCertificatePath,
 		config.Opts.SignKeyPath,
 		config.Opts.SignKeyPassword,
 	)
 	if err != nil {
-		return errors.Wrap(err, "cannot parse input args / envs")
+		return fmt.Errorf("cannot parse input args / envs: %w", err)
 	}
 
-	locationsOpts, err := jenkins_update_center.ValidateUpdateJSONLocation(config.Opts.UpdateJSONURL, config.Opts.UpdateJSONPath)
+	locationsOpts, err := update_center.ValidateUpdateJSONLocation(config.Opts.UpdateJSONURL, config.Opts.UpdateJSONPath)
 	if err != nil {
 		return fmt.Errorf("cannot parse update-center.json location: %w", err)
 	}
@@ -56,17 +57,17 @@ func App(logger *zap.Logger) error {
 		locationsOpts.Timeout = config.Opts.UpdateJSONDownloadTimeout
 	}
 
-	jucOpts := jenkins_update_center.JenkinsUCOpts{
+	jucOpts := update_center.JenkinsUCOpts{
 		Src:      locationsOpts,
 		CacheTtl: config.Opts.UpdateJSONCacheTTL,
-		PatchOpts: jenkins_update_center.JenkinsPatchOpts{
+		PatchOpts: update_center.JenkinsPatchOpts{
 			From: config.Opts.OriginDownloadURL,
 			To:   config.Opts.NewDownloadURL,
 		},
 		SigningInfo: signInfo,
 	}
 
-	juc, err = jenkins_update_center.NewJenkinsUC(jucOpts)
+	juc, err = update_center.NewJenkinsUC(jucOpts)
 	if err != nil {
 		return fmt.Errorf("cannot initialize JenkinsUC object: %w", err)
 	}
@@ -79,21 +80,27 @@ func App(logger *zap.Logger) error {
 		<-c
 		log.Infow("ResignerService shutting down")
 
+		cancelFn()
+
 		juc.Cleanup()
 
 		os.Exit(0)
 	}()
 
-	r, err := initHTTP(logger, juc)
+	//r, err := initHTTP(logger, juc)
+
+	//log.Info("http server completed")
+
+	srv, err := server.NewServer(ctx, log, server.Services{
+		JUCPatcher: juc,
+	})
 	if err != nil {
-		return errors.Wrap(err, "cannot initialize HTTP-server")
+		return fmt.Errorf("cannot init web server: %w", err)
 	}
 
-	if err := http.ListenAndServe(":"+strconv.Itoa(config.Opts.ServerPort), r); err != nil {
-		return errors.Wrapf(err, "ResignerService http server terminated: %s", err)
+	if err = srv.Run(ctx); err != nil {
+		return fmt.Errorf("cannot run web server: %w", err)
 	}
-
-	log.Info("http server completed")
 
 	return nil
 }

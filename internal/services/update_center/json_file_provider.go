@@ -1,4 +1,4 @@
-package jenkins_update_center
+package update_center
 
 import (
 	"io/ioutil"
@@ -47,7 +47,7 @@ func (p *localFileJSONProvider) init(src string) error {
 	return nil
 }
 
-func (p *localFileJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) {
+func (p *localFileJSONProvider) GetFreshContent() (*SignedUpdatedJSON, *JSONMetadataT, error) {
 	log.Infof("Reading %s...", p.path)
 
 	sbytes, err := ioutil.ReadFile(p.path)
@@ -113,6 +113,6 @@ func (p *localFileJSONProvider) IsContentUpdated() (bool, error) {
 	return isUpdated, nil
 }
 
-func (p *localFileJSONProvider) GetContent() (*UpdateJSON, *JSONMetadataT, error) {
+func (p *localFileJSONProvider) GetContent() (*SignedUpdatedJSON, *JSONMetadataT, error) {
 	return p.GetFreshContent()
 }

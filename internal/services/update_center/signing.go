@@ -1,4 +1,4 @@
-package jenkins_update_center
+package update_center
 
 import (
 	"crypto"
@@ -14,6 +14,8 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"jenkins-resigner-service/internal/types/common"
 )
 
 type SigningInfoT struct {
@@ -55,8 +57,8 @@ func (sc JSONSignatureComponents) GetCertificates(roots *x509.CertPool, cert *x5
 	return []string{base64.StdEncoding.EncodeToString(cert.Raw)}
 }
 
-func (sc JSONSignatureComponents) GetSignatureObject(roots *x509.CertPool, cert *x509.Certificate) *Signature {
-	return &Signature{
+func (sc JSONSignatureComponents) GetSignatureObject(roots *x509.CertPool, cert *x509.Certificate) *common.SignatureV2 {
+	return &common.SignatureV2{
 		Certificates:        sc.GetCertificates(roots, cert),
 		CorrectDigest:       sc.GetDigest1(),
 		CorrectDigest512:    sc.GetDigest512(),
@@ -157,7 +159,7 @@ func ParseSigningParameters(caPath, certPath, privPath, privEncPassword string) 
 	return &signingInfo, nil
 }
 
-func (uj UpdateJSON) GetCertificates() ([]x509.Certificate, error) {
+func (uj SignedUpdatedJSON) GetCertificates() ([]x509.Certificate, error) {
 	var (
 		sign = uj.Signature
 
@@ -198,7 +200,7 @@ func getDigestSHA512(data []byte) []byte {
 	//return hex.EncodeToString(h.Sum(nil))
 }
 
-func (uj UpdateJSON) VerifySignature() error {
+func (uj SignedUpdatedJSON) VerifySignature() error {
 	var (
 		err        error
 		crt        *rsa.PublicKey
@@ -293,7 +295,7 @@ func (uj UpdateJSON) VerifySignature() error {
 	return nil
 }
 
-func (sInfo *SigningInfoT) SignJSONData(jsonData *InsecureUpdateJSON) (*Signature, error) {
+func (sInfo *SigningInfoT) SignJSONData(jsonData *UnsignedUpdateJSON) (*common.SignatureV2, error) {
 	signature := JSONSignatureComponents{}
 
 	bytesData, err := jsonData.GetBytes()

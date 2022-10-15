@@ -1,4 +1,4 @@
-package jenkins_update_center
+package update_center
 
 import (
 	"fmt"

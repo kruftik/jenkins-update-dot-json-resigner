@@ -1,4 +1,4 @@
-package jenkins_update_center
+package update_center
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 
 	//"encoding/json"
 	"fmt"
+
 	cjson "github.com/gibson042/canonicaljson-go"
 )
 
@@ -46,13 +47,13 @@ func extractJSONDocument(s []byte) ([]byte, error) {
 	return s[idxFrom : idxTo+1], nil
 }
 
-func prepareUpdateJSONObject(src []byte) (*UpdateJSON, error) {
+func prepareUpdateJSONObject(src []byte) (*SignedUpdatedJSON, error) {
 	jsonStr, err := extractJSONDocument(src)
 	if err != nil {
 		return nil, fmt.Errorf("cannot strip json wrapping trailers: %s", err)
 	}
 
-	uj := &UpdateJSON{}
+	uj := &SignedUpdatedJSON{}
 
 	err = cjson.Unmarshal(jsonStr, uj)
 	if err != nil {
@@ -69,7 +70,7 @@ func prepareUpdateJSONObject(src []byte) (*UpdateJSON, error) {
 	return uj, nil
 }
 
-func GetJSONPString(juc *UpdateJSON) ([]byte, error) {
+func GetJSONPString(juc *SignedUpdatedJSON) ([]byte, error) {
 	in, err := cjson.Marshal(juc)
 	if err != nil {
 		return nil, err
@@ -83,7 +84,7 @@ func GetJSONPString(juc *UpdateJSON) ([]byte, error) {
 	return jsonp, nil
 }
 
-func GetHTMLString(juc *UpdateJSON) ([]byte, error) {
+func GetHTMLString(juc *SignedUpdatedJSON) ([]byte, error) {
 	in, err := cjson.Marshal(juc)
 	if err != nil {
 		return nil, err
@@ -97,9 +98,9 @@ func GetHTMLString(juc *UpdateJSON) ([]byte, error) {
 	return html, nil
 }
 
-func getUnsignedJSON(signedObj UpdateJSON) ([]byte, error) {
+func getUnsignedJSON(signedObj SignedUpdatedJSON) ([]byte, error) {
 	var (
-		c = InsecureUpdateJSON(signedObj)
+		c = UnsignedUpdateJSON(signedObj)
 		//
 		//bt  bytes.Buffer
 		//enc = json.NewEncoder(&bt)
@@ -117,7 +118,7 @@ func getUnsignedJSON(signedObj UpdateJSON) ([]byte, error) {
 	return replaceSymbolsByTrickyMap(data), nil
 }
 
-func (jsonData *InsecureUpdateJSON) GetBytes() ([]byte, error) {
+func (jsonData *UnsignedUpdateJSON) GetBytes() ([]byte, error) {
 	//var (
 	//	bt  bytes.Buffer
 	//	enc = json.NewEncoder(&bt)
