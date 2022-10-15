@@ -12,7 +12,7 @@ github.com/jessevdk/go-flags
 ## explicit
 github.com/pkg/errors
 # github.com/stretchr/testify v1.7.0
-## explicit
+## explicit; go 1.13
 # github.com/treastech/logger v0.0.0-20180705232552-e381e9ecf2e3
 ## explicit
 github.com/treastech/logger
@@ -31,4 +31,4 @@ go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
 # golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-## explicit
+## explicit; go 1.17
