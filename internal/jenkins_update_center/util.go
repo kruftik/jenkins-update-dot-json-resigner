@@ -2,14 +2,15 @@ package jenkins_update_center
 
 import (
 	"bytes"
+	"encoding/json"
+	//"encoding/json"
+	"fmt"
 	"os"
 
 	//"encoding/json"
 
 	//"encoding/json"
 
-	//"encoding/json"
-	"fmt"
 	cjson "github.com/gibson042/canonicaljson-go"
 )
 
@@ -49,14 +50,21 @@ func extractJSONDocument(s []byte) ([]byte, error) {
 func prepareUpdateJSONObject(src []byte) (*UpdateJSON, error) {
 	jsonStr, err := extractJSONDocument(src)
 	if err != nil {
-		return nil, fmt.Errorf("cannot strip json wrapping trailers: %s", err)
+		return nil, fmt.Errorf("cannot strip json wrapping trailers: %w", err)
 	}
 
 	uj := &UpdateJSON{}
 
+	dec := json.NewDecoder(bytes.NewReader(jsonStr))
+	dec.DisallowUnknownFields()
+
+	if err := dec.Decode(uj); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct, most probably format has changed: %w", err)
+	}
+
 	err = cjson.Unmarshal(jsonStr, uj)
 	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %s", err)
+		return nil, fmt.Errorf("cannot unmarshal update-center.json into struct: %w", err)
 	}
 
 	//var ujif interface{}

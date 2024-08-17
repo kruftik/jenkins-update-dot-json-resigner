@@ -19,9 +19,10 @@ func Test_Main(t *testing.T) {
 		"SIGN_CERTIFICATE_PATH": "cert/your-update-center.crt",
 		"SIGN_KEY_PATH":         "cert/your-update-center.key",
 		"NEW_DOWNLOAD_URI":      "http://ftp-nyc.osuosl.org/pub/jenkins/",
-		"UPDATE_JSON_PATH":      "/var/folders/w1/s4rtqcxs6ks7y61ym4gd2h780000gn/T/update.json",
+		"UPDATE_JSON_PATH":      "./testdata/update-center/update-center.json",
 		"http_proxy":            "http://10.16.0.2:3128",
 		"ORIGIN_DOWNLOAD_URL":   "http://updates.jenkins-ci.org/download/",
+		"NEW_DOWNLOAD_URL":      "https://jenkins.io/download/",
 	}
 
 	os.Args = os.Args[:1]

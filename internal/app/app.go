@@ -2,17 +2,16 @@ package app
 
 import (
 	"fmt"
-
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 
-	"jenkins-resigner-service/internal/config"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 	//"fmt"
 	//"os"
 	//"os/signal"
@@ -20,7 +19,7 @@ import (
 	//
 	//"github.com/jessevdk/go-flags"
 	//"go.uber.org/zap"
-	"jenkins-resigner-service/internal/jenkins_update_center"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins_update_center"
 	//"time"
 )
 

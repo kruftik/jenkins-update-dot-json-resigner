@@ -1,6 +1,6 @@
-module jenkins-resigner-service
+module github.com/kruftik/jenkins-update-dot-json-resigner
 
-go 1.19
+go 1.23
 
 require (
 	github.com/gibson042/canonicaljson-go v1.0.3

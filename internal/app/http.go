@@ -1,22 +1,21 @@
 package app
 
 import (
+	"net/http"
+	"net/http/httputil"
+	"net/http/pprof"
+	"net/url"
+	"strconv"
+	"time"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	l "github.com/treastech/logger"
 	"go.uber.org/zap"
 
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"strconv"
-	"time"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins_update_center"
 
-	"jenkins-resigner-service/internal/jenkins_update_center"
-
-	"net/http/pprof"
-
-	"jenkins-resigner-service/internal/config"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 )
 
 const (

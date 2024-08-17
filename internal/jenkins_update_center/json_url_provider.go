@@ -102,7 +102,7 @@ func (p urlJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) 
 
 	resp, err := p.hc.Get(p.url.String())
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot GET %s: %s", p.url.String(), err)
+		return nil, nil, fmt.Errorf("cannot GET %s: %w", p.url.String(), err)
 	}
 	defer func() {
 		if err = resp.Body.Close(); err != nil {
@@ -114,7 +114,7 @@ func (p urlJSONProvider) GetFreshContent() (*UpdateJSON, *JSONMetadataT, error) 
 
 	n, err := jsonFileData.ReadFrom(resp.Body)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot save update.json content to buffer: %s", err)
+		return nil, nil, fmt.Errorf("cannot save update.json content to buffer: %w", err)
 	}
 
 	log.Debugf("Successfully written %d bytes to buffer", n)

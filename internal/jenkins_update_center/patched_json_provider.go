@@ -1,10 +1,11 @@
 package jenkins_update_center
 
 import (
-	"github.com/pkg/errors"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type cacheEntry struct {

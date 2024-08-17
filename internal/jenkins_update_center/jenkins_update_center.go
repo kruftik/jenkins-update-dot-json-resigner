@@ -5,13 +5,13 @@ import (
 	//"encoding/json"
 	//"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"sync"
-
 	//"jenkins-resigner-service/jenkins_update_center/json_schema"
 	"time"
+
+	"github.com/pkg/errors"
 
 	//"github.com/tidwall/gjson"
 	"go.uber.org/zap"

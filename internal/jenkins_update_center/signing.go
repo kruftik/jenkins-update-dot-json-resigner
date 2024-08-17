@@ -87,7 +87,7 @@ func ParseSigningParameters(caPath, certPath, privPath, privEncPassword string) 
 	if caPath != "" {
 		pemBytes, err = ioutil.ReadFile(caPath)
 		if err != nil {
-			return nil, fmt.Errorf("cannot load CA certificates from %s: %s", caPath, err)
+			return nil, fmt.Errorf("cannot load CA certificates from %s: %w", caPath, err)
 		}
 		log.Debug("CA certificates imported from ", caPath)
 
@@ -97,7 +97,7 @@ func ParseSigningParameters(caPath, certPath, privPath, privEncPassword string) 
 	if certPath != "" {
 		pemBytes, err = ioutil.ReadFile(certPath)
 		if err != nil {
-			return nil, fmt.Errorf("cannot load certificates from %s: %s", certPath, err)
+			return nil, fmt.Errorf("cannot load certificates from %s: %w", certPath, err)
 		}
 
 		pemBlock, _ = pem.Decode(pemBytes)
@@ -107,7 +107,7 @@ func ParseSigningParameters(caPath, certPath, privPath, privEncPassword string) 
 		}
 		cert, err = x509.ParseCertificate(pemBlock.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse certificate: " + err.Error())
+			return nil, fmt.Errorf("failed to parse certificate: %w", err)
 		}
 
 		log.Debugf("Certificate loaded from %s, validity between %s and %s for ", certPath, cert.NotBefore, cert.NotAfter)
@@ -118,7 +118,7 @@ func ParseSigningParameters(caPath, certPath, privPath, privEncPassword string) 
 	if privPath != "" {
 		pemBytes, err = ioutil.ReadFile(privPath)
 		if err != nil {
-			return nil, fmt.Errorf("cannot load certificates from %s: %s", privPath, err)
+			return nil, fmt.Errorf("cannot load certificates from %s: %w", privPath, err)
 		}
 		pemBlock, _ = pem.Decode(pemBytes)
 		//log.Debugf("%s, %s", pemBlock.Type, pemBlock.Headers)
@@ -133,13 +133,13 @@ func ParseSigningParameters(caPath, certPath, privPath, privEncPassword string) 
 
 		if pkeyIf, err = x509.ParsePKCS1PrivateKey(pemBytes); err != nil {
 			if pkeyIf, err = x509.ParsePKCS8PrivateKey(pemBytes); err != nil { // note this returns type `interface{}`
-				return nil, fmt.Errorf("cannot load private key from %s: %s", privPath, err)
+				return nil, fmt.Errorf("cannot load private key from %s: %w", privPath, err)
 			}
 		}
 
 		priv, ok = pkeyIf.(*rsa.PrivateKey)
 		if !ok {
-			return nil, fmt.Errorf("cannot load private key from %s: %s", privEncPassword, err)
+			return nil, fmt.Errorf("cannot load private key from %s: %w", privEncPassword, err)
 		}
 
 		//log.Debugf("Loaded private key with '%d' public part", pkey.Public())
@@ -305,12 +305,12 @@ func (sInfo *SigningInfoT) SignJSONData(jsonData *InsecureUpdateJSON) (*Signatur
 
 	signature.signature512, err = rsa.SignPKCS1v15(rand.Reader, sInfo.priv, crypto.SHA512, signature.digest512)
 	if err != nil {
-		return nil, fmt.Errorf("cannot sign JSON document with SHA512WithRSA: %s", err)
+		return nil, fmt.Errorf("cannot sign JSON document with SHA512WithRSA: %w", err)
 	}
 
 	signature.signature1, err = rsa.SignPKCS1v15(rand.Reader, sInfo.priv, crypto.SHA1, signature.digest1)
 	if err != nil {
-		return nil, fmt.Errorf("cannot sign JSON document with SHA1WithRSA: %s", err)
+		return nil, fmt.Errorf("cannot sign JSON document with SHA1WithRSA: %w", err)
 	}
 
 	return signature.GetSignatureObject(sInfo.roots, sInfo.cert), nil

@@ -11,8 +11,8 @@ import (
 	"github.com/jessevdk/go-flags"
 	"go.uber.org/zap"
 
-	"jenkins-resigner-service/internal/app"
-	"jenkins-resigner-service/internal/config"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/app"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 )
 
 var (
