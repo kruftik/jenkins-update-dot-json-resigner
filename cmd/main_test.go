@@ -16,12 +16,11 @@ import (
 func Test_Main(t *testing.T) {
 	env := map[string]string{
 		"DEBUG":                 "true",
-		"SIGN_CERTIFICATE_PATH": "cert/your-update-center.crt",
-		"SIGN_KEY_PATH":         "cert/your-update-center.key",
+		"SIGN_CERTIFICATE_PATH": "../cert/your-update-center.crt",
+		"SIGN_KEY_PATH":         "../cert/your-update-center.key",
 		"NEW_DOWNLOAD_URI":      "http://ftp-nyc.osuosl.org/pub/jenkins/",
-		"UPDATE_JSON_PATH":      "./testdata/update-center/update-center.json",
-		"http_proxy":            "http://10.16.0.2:3128",
-		"ORIGIN_DOWNLOAD_URL":   "http://updates.jenkins-ci.org/download/",
+		"UPDATE_JSON_PATH":      "../testdata/update-center/update-center.jsonp",
+		"ORIGIN_DOWNLOAD_URL":   "https://updates.jenkins.io/download/",
 		"NEW_DOWNLOAD_URL":      "https://jenkins.io/download/",
 	}
 
@@ -36,7 +35,7 @@ func Test_Main(t *testing.T) {
 	}
 
 	go func() {
-		time.Sleep(26 * time.Second)
+		time.Sleep(90 * time.Second)
 		err := syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
 		if err != nil {
 			t.Error(err)

@@ -1,7 +1,11 @@
-package jenkins_update_center
+package types
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
+
+	cjson "github.com/gibson042/canonicaljson-go"
 )
 
 type Core struct {
@@ -86,38 +90,43 @@ type Signature struct {
 
 	CorrectSignature    string `json:"correct_signature"`
 	CorrectSignature512 string `json:"correct_signature512"`
-
-	// incorrect digest and signatures are not included anymore
-	//Digest              string   `json:"digest"`
-	//Digest512           string   `json:"digest512"`
-	//Signature           string   `json:"signature"`
-	//Signature512        string   `json:"signature512"`
 }
 
-//type Versions struct {
-//	LastVersion string `json:"lastVersion"`
-//	Pattern     string `json:"pattern"`
-//}
+type SignedUpdateJSON struct {
+	*InsecureUpdateJSON
+	Signature Signature `json:"signature"`
+}
 
-//type Warnings struct {
-//	ID       string     `json:"id"`
-//	Message  string     `json:"message"`
-//	Name     string     `json:"name"`
-//	Type     string     `json:"type"`
-//	URL      string     `json:"url"`
-//	Versions []Versions `json:"versions"`
-//}
+func (o *SignedUpdateJSON) Sign(signer Signer) error {
+	signature, err := signer.GetSignature(o.GetUnsigned())
+	if err != nil {
+		return fmt.Errorf("cannot calculate signature: %w", err)
+	}
 
-type UpdateJSON struct {
-	ConnectionCheckURL  string                 `json:"connectionCheckUrl"`
-	Core                Core                   `json:"core"`
-	Deprecations        map[string]interface{} `json:"deprecations"`
-	GenerationTimestamp string                 `json:"generationTimestamp"`
-	ID                  string                 `json:"id"`
-	Plugins             Plugins                `json:"plugins"`
-	Signature           Signature              `json:"signature"`
-	UpdateCenterVersion string                 `json:"updateCenterVersion"`
-	Warnings            []interface{}          `json:"warnings"`
+	if err := signer.VerifySignature(o.InsecureUpdateJSON, signature); err != nil {
+		return fmt.Errorf("cannot verify signature: %w", err)
+	}
+
+	o.Signature = signature
+
+	return nil
+}
+
+func (o *SignedUpdateJSON) MarshalJSON() ([]byte, error) {
+	bytez, err := cjson.Marshal(*o)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal SignedUpdateJSON: %w", err)
+	}
+
+	return replaceSymbolsByTrickyMap(bytez), nil
+}
+
+func (o *SignedUpdateJSON) MarshalJSONTo(w io.Writer) error {
+	return cjson.NewEncoder(w).Encode(o)
+}
+
+func (o *SignedUpdateJSON) GetUnsigned() *InsecureUpdateJSON {
+	return o.InsecureUpdateJSON
 }
 
 type InsecureUpdateJSON struct {
@@ -127,7 +136,19 @@ type InsecureUpdateJSON struct {
 	GenerationTimestamp string                 `json:"generationTimestamp"`
 	ID                  string                 `json:"id"`
 	Plugins             Plugins                `json:"plugins"`
-	Signature           Signature              `json:"-"`
 	UpdateCenterVersion string                 `json:"updateCenterVersion"`
 	Warnings            []interface{}          `json:"warnings"`
+}
+
+func (o *InsecureUpdateJSON) MarshalJSONTo(w io.Writer) error {
+	return cjson.NewEncoder(w).Encode(o)
+}
+
+func (o *InsecureUpdateJSON) MarshalJSON() ([]byte, error) {
+	bytez, err := cjson.Marshal(*o)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal InsecureUpdateJSON: %w", err)
+	}
+
+	return replaceSymbolsByTrickyMap(bytez), nil
 }

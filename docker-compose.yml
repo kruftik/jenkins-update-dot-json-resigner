@@ -10,6 +10,7 @@ services:
     environment:
       JAVA_OPTS: -Xms1g -Xmx1g
 
+
   update-json-resigner:
 #    image: kruft/jenkins-update-dot-json-resigner:1.0
     build:
@@ -17,8 +18,13 @@ services:
     volumes:
       - ./cert:/cert/
     environment:
-#      DEBUG: "true"
+      DEBUG: "true"
+
       LISTEN_PORT: 8282
+
+#      LISTEN_PORT: 8443
+#      TLS_CERT_PATH: "/cert/your-update-center.crt"
+#      TLS_KEY_PATH: "/cert/your-update-center.key"
 
       UPDATE_JSON_URL: http://updates.jenkins.io/update-center.json
 
@@ -33,3 +39,4 @@ services:
       SIGN_KEY_PATH: /cert/your-update-center.key
     ports:
       - "8282:8282"
+#      - "8443:8443"
