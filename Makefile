@@ -5,7 +5,20 @@ gen-cert:
 	openssl req -x509 \
 		-newkey rsa:4096 -keyout $(CERT_PATH)/your-update-center.key -nodes \
 		-sha256 -days 3650 -out $(CERT_PATH)/your-update-center.crt \
+	    -subj "/CN=YourJenkinsUpdateCenter2"
+
+gen-test-cert:
+	mkdir -p $(CERT_PATH)
+	openssl req -x509 \
+		-newkey rsa:4096 -keyout ./testdata/certs/test.key -nodes \
+		-sha256 -days 3650 -out ./testdata/certs/test.crt \
 	    -subj "/CN=YourJenkinsUpdateCenter"
+
+test:
+	go test ./...
+
+build:
+	go build -o app -v ./cmd
 
 run-with-file:
 	go run ./cmd/... \
