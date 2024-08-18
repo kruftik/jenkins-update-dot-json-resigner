@@ -37,13 +37,12 @@ type Service struct {
 }
 
 func NewJenkinsUpdateCenter(
-	ctx context.Context,
 	log *zap.SugaredLogger,
 	cfg config.AppConfig,
 	sourceFileProvider sourcefileproviders.Provider,
 	signer types.Signer,
 	patchers []types.Patcher,
-) (*Service, error) {
+) *Service {
 	s := &Service{
 		log:                log,
 		cfg:                cfg,
@@ -52,14 +51,19 @@ func NewJenkinsUpdateCenter(
 		patchers:           patchers,
 	}
 
-	if err := s.RefreshContent(ctx); err != nil {
-		return nil, fmt.Errorf("cannot refresh content: %w", err)
-	}
-
-	return s, nil
+	return s
 }
 
 func (s *Service) CleanUp(_ context.Context) error {
+	if err := os.Remove(path.Join(s.cfg.DataDirPath, UpdateCenterDotJSON)); err != nil {
+		return fmt.Errorf("cannot remove jsonp file")
+	}
+	if err := os.Remove(path.Join(s.cfg.DataDirPath, UpdateCenterDotHTML)); err != nil {
+		return fmt.Errorf("cannot remove html file")
+	}
+
+	s.log.Debugf("patched files removed")
+
 	return nil
 }
 
@@ -124,9 +128,13 @@ func (s *Service) RefreshContent(ctx context.Context) error {
 		return fmt.Errorf("cannot write update-center.json: %w", err)
 	}
 
+	s.log.Debugf("%s file saved", path.Join(s.cfg.DataDirPath, UpdateCenterDotJSON))
+
 	if err := s.writeDataToFileWithTrailers(path.Join(s.cfg.DataDirPath, UpdateCenterDotHTML), bytez, sourcefileproviders.WrappedHTMLPrefix, sourcefileproviders.WrappedHTMLSuffix); err != nil {
 		return fmt.Errorf("cannot write update-center.json.html: %w", err)
 	}
+
+	s.log.Debugf("%s file saved", path.Join(s.cfg.DataDirPath, UpdateCenterDotHTML))
 
 	s.metadata = newMetadata
 

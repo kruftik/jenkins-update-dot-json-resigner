@@ -80,8 +80,6 @@ func (s *Service) isDigestsMatch(computedDigest []byte, providedDigest string) b
 }
 
 func (s *Service) VerifySignature(unsigned types.Marshaler, signature types.Signature) error {
-	s.log.Debug("Verifying JSON document signature...")
-
 	bytez, err := unsigned.MarshalJSON()
 	if err != nil {
 		return fmt.Errorf("cannot marshal unsigned JSON: %w", err)
@@ -105,18 +103,16 @@ func (s *Service) VerifySignature(unsigned types.Marshaler, signature types.Sign
 	if !s.isDigestsMatch(shaXDigest, signature.CorrectDigest512) {
 		return fmt.Errorf("provided and computed SHA512 digests are different: %s vs %s", hex.EncodeToString(shaXDigest), signature.CorrectDigest512)
 	}
-	s.log.Debug("SHA512 digests match")
 
 	sig, err := hex.DecodeString(signature.CorrectSignature512)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot decode sha512 signature: %w", err)
 	}
 
 	err = rsa.VerifyPKCS1v15(crt, crypto.SHA512, shaXDigest, sig)
 	if err != nil {
-		return err
+		return fmt.Errorf("sha256 signature verification failed: %w", err)
 	}
-	s.log.Debugf("RSAWithSHA512 signature valid")
 
 	// SHA1...
 	shaXDigest = getDigestSHA1(bytez)
@@ -124,18 +120,16 @@ func (s *Service) VerifySignature(unsigned types.Marshaler, signature types.Sign
 	if !s.isDigestsMatch(shaXDigest, signature.CorrectDigest) {
 		return fmt.Errorf("provided and computed SHA1 digests are different: %s vs %s", hex.EncodeToString(shaXDigest), signature.CorrectDigest)
 	}
-	s.log.Debug("SHA1 digests match")
 
 	sig, err = base64.StdEncoding.DecodeString(signature.CorrectSignature)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot base64 decode sha1 signature: %w", err)
 	}
 
 	err = rsa.VerifyPKCS1v15(crt, crypto.SHA1, shaXDigest, sig)
 	if err != nil {
-		return err
+		return fmt.Errorf("sha1 signature verification failed: %w", err)
 	}
-	s.log.Debug("RSAWithSHA1 signature valid")
 
 	return nil
 }

@@ -7,18 +7,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"time"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders"
-)
-
-var (
-	MaxIdleConns    = 10
-	IdleConnTimeout = 30 * time.Second
-	Timeout         time.Duration
 )
 
 var (
@@ -49,7 +42,6 @@ func NewRemoteURLProvider(log *zap.SugaredLogger, sURL string) (*Provider, error
 		//	MaxIdleConns:    MaxIdleConns,
 		//	IdleConnTimeout: IdleConnTimeout * time.Second,
 		//},
-		Timeout: Timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			p.log.Debugf("%s %s: redirected to %s", req.Method, via[0].URL.String(), req.URL.String())
 			return nil
@@ -141,7 +133,7 @@ func (p *Provider) GetBody(ctx context.Context) (sourcefileproviders.FileMetadat
 		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot create temporary file: %w", err)
 	}
 
-	p.log.Infof("%s temporary file created", f.Name())
+	p.log.Debugf("%s temporary file created", f.Name())
 
 	length, err := io.Copy(f, resp.Body)
 	if err != nil {

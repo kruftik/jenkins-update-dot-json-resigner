@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
@@ -70,10 +69,17 @@ func App(ctx context.Context, version string) error {
 		patcher.NewPatcher(log.With("component", "patcher"), cfg.Patch),
 	}
 
-	juc, err := jenkins.NewJenkinsUpdateCenter(ctx, log.With("component", "juc"), cfg, sourceFileProvider, signer, patchers)
-	if err != nil {
-		return fmt.Errorf("cannot initialize jenkins update center: %w", err)
+	juc := jenkins.NewJenkinsUpdateCenter(log.With("component", "juc"), cfg, sourceFileProvider, signer, patchers)
+
+	if err := juc.RefreshContent(ctx); err != nil {
+		return fmt.Errorf("cannot refresh content: %w", err)
 	}
+
+	defer func() {
+		if err := juc.CleanUp(context.Background()); err != nil {
+			log.Warnf(fmt.Sprintf("cannot clean up: %v", err))
+		}
+	}()
 
 	srv, err := server.NewServer(log.With("component", "server"), cfg.Server, juc, cfg.DataDirPath, cfg.Patch.NewDownloadURL)
 	if err != nil {
@@ -81,11 +87,7 @@ func App(ctx context.Context, version string) error {
 	}
 
 	if err := srv.ListenAndServe(ctx); err != nil {
-		return errors.Wrapf(err, "ResignerService http server terminated: %s", err)
-	}
-
-	if err := juc.CleanUp(context.Background()); err != nil {
-		return fmt.Errorf("cannot clean up: %w", err)
+		return fmt.Errorf("ResignerService http server terminated: %w", err)
 	}
 
 	return nil
