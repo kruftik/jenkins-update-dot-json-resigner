@@ -81,7 +81,7 @@ func App(ctx context.Context, version string) error {
 		}
 	}()
 
-	srv, err := server.NewServer(log.With("component", "server"), cfg.Server, juc, cfg.DataDirPath, cfg.Patch.NewDownloadURL)
+	srv, err := server.NewServer(log.With("component", "server"), cfg.Server, juc, cfg.DataDirPath, cfg.RealMirrorURL)
 	if err != nil {
 		return fmt.Errorf("cannot initialize server: %w", err)
 	}

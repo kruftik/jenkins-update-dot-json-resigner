@@ -39,6 +39,8 @@ type AppConfig struct {
 
 	Source SourceConfig
 
+	RealMirrorURL string `long:"real-mirror-url" env:"REAL_MIRROR_URL" default:"https://ftp.belnet.be/mirror/jenkins/"`
+
 	UpdateJSONDownloadTimeout time.Duration `long:"timeout" env:"UPDATE_JSON_DOWNLOAD_TIMEOUT" default:"120s"`
 
 	UpdateJSONCacheTTL time.Duration `long:"cache-ttl" env:"UPDATE_JSON_CACHE_TTL" default:"30m"`

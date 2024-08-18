@@ -5,6 +5,7 @@ services:
     image: jenkins/jenkins:latest
     volumes:
       - ./jenkins_home:/var/jenkins_home
+      - ./cert/java-cacerts:/opt/java/openjdk/lib/security/cacerts
     ports:
       - "8080:8080"
     environment:
@@ -26,17 +27,19 @@ services:
 #      TLS_CERT_PATH: "/cert/your-update-center.crt"
 #      TLS_KEY_PATH: "/cert/your-update-center.key"
 
-      UPDATE_JSON_URL: http://updates.jenkins.io/update-center.json
+      UPDATE_JSON_URL: https://updates.jenkins.io/update-center.json
 
       UPDATE_JSON_DOWNLOAD_TIMEOUT: 90s
 
       UPDATE_JSON_CACHE_TTL: 30m
 
-      ORIGIN_DOWNLOAD_URL: http://updates.jenkins-ci.org/download/
-      NEW_DOWNLOAD_URL: http://ftp-nyc.osuosl.org/pub/jenkins/
+      ORIGIN_DOWNLOAD_URL: https://updates.jenkins.io/download/
+      NEW_DOWNLOAD_URL: http://update-json-resigner:8282/
+
+      REAL_MIRROR_URL: "https://ftp.belnet.be/mirror/jenkins/"
 
       SIGN_CERTIFICATE_PATH: /cert/your-update-center.crt
       SIGN_KEY_PATH: /cert/your-update-center.key
     ports:
       - "8282:8282"
-#      - "8443:8443"
+      - "8443:8443"
