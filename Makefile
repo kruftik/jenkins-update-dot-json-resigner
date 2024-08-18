@@ -2,10 +2,18 @@ CERT_PATH = ./cert
 
 gen-cert:
 	mkdir -p $(CERT_PATH)
-	openssl req -x509 \
-		-newkey rsa:4096 -keyout $(CERT_PATH)/your-update-center.key -nodes \
-		-sha256 -days 3650 -out $(CERT_PATH)/your-update-center.crt \
-	    -subj "/CN=YourJenkinsUpdateCenter2"
+	#openssl req -x509 \
+#		-newkey rsa:4096 -keyout $(CERT_PATH)/your-update-center.key -nodes \
+#		-sha256 -days 3650 -out $(CERT_PATH)/your-update-center.crt \
+#	    -subj "/CN=YourJenkinsUpdateCenter"
+	openssl genrsa -out $(CERT_PATH)/your-update-center.key 4096
+	openssl req -new -key $(CERT_PATH)/your-update-center.key -out $(CERT_PATH)/your-update-center.csr -subj "/CN=YourJenkinsUpdateCenter"
+
+	openssl x509 \
+		-req -in $(CERT_PATH)/your-update-center.csr \
+		-signkey $(CERT_PATH)/your-update-center.key \
+		-sha256 -days 3650 -extfile $(CERT_PATH)/openssl-v3.ext \
+		-out $(CERT_PATH)/your-update-center.crt
 
 gen-test-cert:
 	mkdir -p $(CERT_PATH)
@@ -15,7 +23,7 @@ gen-test-cert:
 	    -subj "/CN=YourJenkinsUpdateCenter"
 
 test:
-	go test -v ./...
+	go test ./...
 
 build:
 	go build -o app -v ./cmd

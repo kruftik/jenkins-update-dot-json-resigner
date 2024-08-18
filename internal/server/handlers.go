@@ -6,6 +6,7 @@ import (
 	"net/http/httputil"
 	"net/http/pprof"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -25,9 +26,61 @@ func (s Server) httpProxy(proxyToURL string) (*httputil.ReverseProxy, error) {
 		return nil, fmt.Errorf("origin URL is incorrect: %w", err)
 	}
 
-	proxy := httputil.NewSingleHostReverseProxy(originURL)
+	singleJoiningSlash := func(a, b string) string {
+		aslash := strings.HasSuffix(a, "/")
+		bslash := strings.HasPrefix(b, "/")
+		switch {
+		case aslash && bslash:
+			return a + b[1:]
+		case !aslash && !bslash:
+			return a + "/" + b
+		}
+		return a + b
+	}
 
-	return proxy, nil
+	joinURLPath := func(a, b *url.URL) (path, rawpath string) {
+		if a.RawPath == "" && b.RawPath == "" {
+			return singleJoiningSlash(a.Path, b.Path), ""
+		}
+		// Same as singleJoiningSlash, but uses EscapedPath to determine
+		// whether a slash should be added
+		apath := a.EscapedPath()
+		bpath := b.EscapedPath()
+
+		aslash := strings.HasSuffix(apath, "/")
+		bslash := strings.HasPrefix(bpath, "/")
+
+		switch {
+		case aslash && bslash:
+			return a.Path + b.Path[1:], apath + bpath[1:]
+		case !aslash && !bslash:
+			return a.Path + "/" + b.Path, apath + "/" + bpath
+		}
+		return a.Path + b.Path, apath + bpath
+	}
+
+	rewriteRequestURL := func(req *http.Request, target *url.URL) {
+		targetQuery := target.RawQuery
+		req.Host = target.Host
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		req.URL.Path, req.URL.RawPath = joinURLPath(target, req.URL)
+		if targetQuery == "" || req.URL.RawQuery == "" {
+			req.URL.RawQuery = targetQuery + req.URL.RawQuery
+		} else {
+			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		}
+
+		s.log.Infof("proxying request to %s", req.URL.String())
+	}
+
+	director := func(req *http.Request) {
+		rewriteRequestURL(req, originURL)
+	}
+
+	return &httputil.ReverseProxy{
+		Director: director,
+	}, nil
 }
 
 func (s Server) getHandlers() (*chi.Mux, error) {
@@ -73,7 +126,9 @@ func (s Server) getHandlers() (*chi.Mux, error) {
 			})
 
 			r.Get("/"+jenkins.UpdateCenterDotJSON, fsHandler.ServeHTTP)
+			r.Head("/"+jenkins.UpdateCenterDotJSON, fsHandler.ServeHTTP)
 			r.Get("/"+jenkins.UpdateCenterDotHTML, fsHandler.ServeHTTP)
+			r.Head("/"+jenkins.UpdateCenterDotHTML, fsHandler.ServeHTTP)
 		})
 
 		r.Get("/updates/hudson.tasks.*", func(w http.ResponseWriter, r *http.Request) {
