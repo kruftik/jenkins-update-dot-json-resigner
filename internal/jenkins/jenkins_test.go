@@ -34,6 +34,7 @@ func TestCurrentUpdateJSON(t *testing.T) {
 	}
 
 	_, err = NewJenkinsUpdateCenter(context.Background(), log, config.AppConfig{
+		DataDirPath:               "/tmp",
 		UpdateJSONDownloadTimeout: 128 * time.Second,
 	}, p, signer, nil)
 	if err != nil {
