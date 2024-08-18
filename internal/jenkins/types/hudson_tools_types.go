@@ -1,4 +1,4 @@
-package jenkins_update_center
+package types
 
 type HudsonToolUpdatesReleaseFile struct {
 	Name  string `json:"name"`

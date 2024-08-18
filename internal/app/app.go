@@ -1,98 +1,83 @@
 package app
 
 import (
+	"context"
 	"fmt"
-	"net/http"
-	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
-	//"fmt"
-	//"os"
-	//"os/signal"
-	//"syscall"
-	//
-	//"github.com/jessevdk/go-flags"
-	//"go.uber.org/zap"
-	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins_update_center"
-	//"time"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/patcher"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/signer"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders/localfile"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders/remoteurl"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/server"
+
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins"
 )
 
-var (
-	log *zap.SugaredLogger
-
-	//updateJSON *UpdateJSONT
-	juc *jenkins_update_center.JenkinsUCJSONT
-)
-
-func App(logger *zap.Logger) error {
-	zap.ReplaceGlobals(logger)
-	log = zap.S()
-
-	jenkins_update_center.Init(log)
-
-	signInfo, err := jenkins_update_center.ParseSigningParameters(
-		config.Opts.SignCAPath,
-		config.Opts.SignCertificatePath,
-		config.Opts.SignKeyPath,
-		config.Opts.SignKeyPassword,
-	)
+func App(ctx context.Context, version string) error {
+	cfg, err := config.ParseConfig()
 	if err != nil {
-		return errors.Wrap(err, "cannot parse input args / envs")
+		return fmt.Errorf("cannot parse config: %w", err)
 	}
 
-	locationsOpts, err := jenkins_update_center.ValidateUpdateJSONLocation(config.Opts.UpdateJSONURL, config.Opts.UpdateJSONPath)
-	if err != nil {
-		return fmt.Errorf("cannot parse update-center.json location: %w", err)
+	var logger *zap.Logger
+
+	// Logging...
+	if cfg.Dbg {
+		logger, _ = zap.NewDevelopment()
+	} else {
+		logger, _ = zap.NewProduction()
 	}
-
-	if locationsOpts.IsRemoteSource {
-		locationsOpts.Timeout = config.Opts.UpdateJSONDownloadTimeout
-	}
-
-	jucOpts := jenkins_update_center.JenkinsUCOpts{
-		Src:      locationsOpts,
-		CacheTtl: config.Opts.UpdateJSONCacheTTL,
-		PatchOpts: jenkins_update_center.JenkinsPatchOpts{
-			From: config.Opts.OriginDownloadURL,
-			To:   config.Opts.NewDownloadURL,
-		},
-		SigningInfo: signInfo,
-	}
-
-	juc, err = jenkins_update_center.NewJenkinsUC(jucOpts)
-	if err != nil {
-		return fmt.Errorf("cannot initialize JenkinsUC object: %w", err)
-	}
-
-	// Shutting down handling...
-	c := make(chan os.Signal, 1)
-
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		<-c
-		log.Infow("ResignerService shutting down")
-
-		juc.Cleanup()
-
-		os.Exit(0)
+	defer func() {
+		_ = logger.Sync()
 	}()
 
-	r, err := initHTTP(logger, juc)
+	log := logger.Sugar()
+
+	log.Infof("Jenkins update.json ResignerService (v%s) starting up...", version)
+
+	var sourceFileProvider sourcefileproviders.SourceFileProvider
+
+	if cfg.UpdateJSONURL != "" {
+		sourceFileProvider, err = remoteurl.NewRemoteURLProvider(log, cfg.UpdateJSONURL)
+	} else {
+		sourceFileProvider, err = localfile.NewLocalFileProvider(cfg.UpdateJSONPath)
+	}
 	if err != nil {
-		return errors.Wrap(err, "cannot initialize HTTP-server")
+		return fmt.Errorf("cannot initialize source file provider: %w", err)
 	}
 
-	if err := http.ListenAndServe(":"+strconv.Itoa(config.Opts.ServerPort), r); err != nil {
+	signer, err := signer.NewSignerService(log, cfg.SignCAPath, cfg.SignCertificatePath, cfg.SignKeyPath, cfg.SignKeyPassword)
+	if err != nil {
+		return fmt.Errorf("cannot initialize signer: %w", err)
+	}
+
+	patchers := []patcher.Patcher{
+		patcher.NewPatcher(log, cfg.OriginDownloadURL, cfg.NewDownloadURL),
+	}
+
+	juc, err := jenkins.NewJenkinsUpdateCenter(ctx, log, cfg, sourceFileProvider, signer, patchers)
+	if err != nil {
+		return fmt.Errorf("cannot initialize jenkins update center: %w", err)
+	}
+
+	srv, err := server.NewServer(log, juc, cfg.ServerAddr+":"+strconv.Itoa(cfg.ServerPort), cfg.DataDirPath, cfg.NewDownloadURL)
+	if err != nil {
+		return fmt.Errorf("cannot initialize server: %w", err)
+	}
+
+	if err := srv.ListenAndServe(ctx); err != nil {
 		return errors.Wrapf(err, "ResignerService http server terminated: %s", err)
 	}
 
-	log.Info("http server completed")
+	if err := juc.CleanUp(context.Background()); err != nil {
+		return fmt.Errorf("cannot clean up: %w", err)
+	}
 
 	return nil
 }

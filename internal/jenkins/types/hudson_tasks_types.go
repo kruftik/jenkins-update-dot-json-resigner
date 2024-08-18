@@ -1,4 +1,4 @@
-package jenkins_update_center
+package types
 
 type HudsonTaskListElement struct {
 	ID   string `json:"id"`
