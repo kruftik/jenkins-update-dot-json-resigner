@@ -9,12 +9,8 @@ import (
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/types"
 )
 
-type Patcher interface {
-	Patch(insecureJSON *types.InsecureUpdateJSON) error
-}
-
 var (
-	_ Patcher = Service{}
+	_ types.Patcher = Service{}
 )
 
 type Service struct {

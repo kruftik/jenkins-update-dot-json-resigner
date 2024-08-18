@@ -35,6 +35,8 @@ func (s Server) getHandlers() (*chi.Mux, error) {
 
 	r.Use(middleware.Heartbeat("/healthz"))
 
+	r.Use(l.Logger(s.log.Desugar()))
+
 	// Регистрация pprof-обработчиков
 	r.HandleFunc("/debug/pprof/", pprof.Index)
 	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
@@ -52,8 +54,6 @@ func (s Server) getHandlers() (*chi.Mux, error) {
 		r.Use(middleware.Recoverer)
 
 		r.Use(middleware.Timeout(timeoutTotal))
-
-		r.Use(l.Logger(s.log.Desugar()))
 
 		r.Get("/*", proxy.ServeHTTP)
 
@@ -75,46 +75,6 @@ func (s Server) getHandlers() (*chi.Mux, error) {
 			r.Get("/"+jenkins.UpdateCenterDotJSON, fsHandler.ServeHTTP)
 			r.Get("/"+jenkins.UpdateCenterDotHTML, fsHandler.ServeHTTP)
 		})
-
-		//r.Get(updateCenterDotJSON, func(w http.ResponseWriter, r *http.Request) {
-		//	length, body, err := s.patchedFileProvider.GetJSONP(r.Context())
-		//	if err != nil {
-		//		s.log.Errorf("cannot get patched file: %v", err)
-		//		w.WriteHeader(http.StatusInternalServerError)
-		//		return
-		//	}
-		//
-		//	cl := strconv.Itoa(length)
-		//	w.Header().Set("Content-Type", "application/json")
-		//	w.Header().Set("Content-Length", cl)
-		//	w.Header().Set("Etag", "update-center-json-"+cl)
-		//
-		//	if _, err := io.Copy(w, body); err != nil {
-		//		s.log.Warnf("cannot write response: %v", err)
-		//		w.WriteHeader(http.StatusInternalServerError)
-		//		return
-		//	}
-		//})
-
-		//r.Get(updateCenterDotHTML, func(w http.ResponseWriter, r *http.Request) {
-		//	length, body, err := s.patchedFileProvider.GetHTML(r.Context())
-		//	if err != nil {
-		//		s.log.Errorf("cannot get patched file: %v", err)
-		//		w.WriteHeader(http.StatusInternalServerError)
-		//		return
-		//	}
-		//
-		//	cl := strconv.Itoa(length)
-		//	w.Header().Set("Content-Type", "text/html")
-		//	w.Header().Set("Content-Length", cl)
-		//	w.Header().Set("Etag", "update-center-json-html-"+cl)
-		//
-		//	if _, err := io.Copy(w, body); err != nil {
-		//		s.log.Warnf("cannot write response: %v", err)
-		//		w.WriteHeader(http.StatusInternalServerError)
-		//		return
-		//	}
-		//})
 
 		r.Get("/updates/hudson.tasks.*", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)

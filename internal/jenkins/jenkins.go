@@ -12,7 +12,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
-	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/patcher"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/types"
 )
@@ -30,7 +29,7 @@ type Service struct {
 	cfg                config.AppConfig
 	sourceFileProvider sourcefileproviders.Provider
 	signer             types.Signer
-	patchers           []patcher.Patcher
+	patchers           []types.Patcher
 
 	mu sync.Mutex
 
@@ -43,7 +42,7 @@ func NewJenkinsUpdateCenter(
 	cfg config.AppConfig,
 	sourceFileProvider sourcefileproviders.Provider,
 	signer types.Signer,
-	patchers []patcher.Patcher,
+	patchers []types.Patcher,
 ) (*Service, error) {
 	s := &Service{
 		log:                log,
@@ -90,7 +89,7 @@ func (s *Service) RefreshContent(ctx context.Context) error {
 		return fmt.Errorf("failed to get JSONP metadata: %w", err)
 	}
 
-	if newMetadata.Etag == s.metadata.Etag {
+	if newMetadata == s.metadata {
 		s.log.Debugf("original file didn't change: %d bytes, last-modified: %s", newMetadata.Size, newMetadata.LastModified)
 		return nil
 	}

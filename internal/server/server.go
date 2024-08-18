@@ -62,6 +62,8 @@ func (s Server) ListenAndServe(ctx context.Context) error {
 	}(ctx)
 
 	if s.cfg.TLSCertPath != "" && s.cfg.TLSKeyPath != "" {
+		s.log.Infof("starting https server on %s:%d", s.cfg.ListenAddr, s.cfg.ListenPort)
+
 		if err := s.srv.ListenAndServeTLS(s.cfg.TLSCertPath, s.cfg.TLSKeyPath); err != nil {
 			if !errors.Is(err, http.ErrServerClosed) {
 				return err
@@ -69,6 +71,8 @@ func (s Server) ListenAndServe(ctx context.Context) error {
 		}
 		return nil
 	}
+
+	s.log.Infof("starting http server on %s:%d", s.cfg.ListenAddr, s.cfg.ListenPort)
 
 	if err := s.srv.ListenAndServe(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {

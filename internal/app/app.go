@@ -14,6 +14,7 @@ import (
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders/cache"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders/localfile"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders/remoteurl"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/types"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/server"
 
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins"
@@ -65,7 +66,7 @@ func App(ctx context.Context, version string) error {
 		return fmt.Errorf("cannot initialize signer: %w", err)
 	}
 
-	patchers := []patcher.Patcher{
+	patchers := []types.Patcher{
 		patcher.NewPatcher(log.With("component", "patcher"), cfg.Patch),
 	}
 

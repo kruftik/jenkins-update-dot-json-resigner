@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	GitCommit = "0.0.1"
+	GitCommit = "0.0.0-dev"
 )
 
 func main() {

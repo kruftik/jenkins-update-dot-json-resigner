@@ -10,7 +10,7 @@ import (
 )
 
 type ServerConfig struct {
-	ListenAddr string `long:"server-addr" env:"SERVER_ADDR" default:""`
+	ListenAddr string `long:"listen-addr" env:"LISTEN_ADDR" default:""`
 	ListenPort int    `long:"listen-port" env:"LISTEN_PORT" default:"8282"`
 
 	TLSCertPath string `long:"tlscert" env:"TLS_CERT_PATH" default:""`
@@ -69,7 +69,7 @@ func ParseConfig() (AppConfig, error) {
 		return AppConfig{}, err
 	}
 
-	cfg.Patch.OriginDownloadURL = strings.TrimSuffix(cfg.Patch.NewDownloadURL, "/")
+	cfg.Patch.OriginDownloadURL = strings.TrimSuffix(cfg.Patch.OriginDownloadURL, "/")
 	cfg.Patch.NewDownloadURL = strings.TrimSuffix(cfg.Patch.NewDownloadURL, "/")
 
 	if err := cfg.validateSource(); err != nil {
