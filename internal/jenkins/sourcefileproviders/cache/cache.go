@@ -60,7 +60,12 @@ func (c *Cache) refreshContent(ctx context.Context) error {
 		return fmt.Errorf("failed to get JSONP metadata: %w", err)
 	}
 
-	if metadata == c.metadata {
+	_, err = os.Stat(c.dataFile)
+	if err != nil {
+		c.log.Infof("data file %s does not exist, force update", c.dataFile)
+	}
+
+	if metadata == c.metadata && err == nil {
 		c.log.Debugf("cached JSONP body is up-to-date, skipping update")
 		return nil
 	}

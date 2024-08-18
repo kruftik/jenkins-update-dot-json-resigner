@@ -89,7 +89,14 @@ func (s *Service) RefreshContent(ctx context.Context) error {
 		return fmt.Errorf("failed to get JSONP metadata: %w", err)
 	}
 
-	if newMetadata == s.metadata {
+	_, err1 := os.Stat(path.Join(s.cfg.DataDirPath, UpdateCenterDotJSON))
+	_, err2 := os.Stat(path.Join(s.cfg.DataDirPath, UpdateCenterDotHTML))
+
+	if err1 != nil || err2 != nil {
+		s.log.Info("temp file(s) do not exist, force update")
+	}
+
+	if newMetadata == s.metadata && err1 == nil && err2 == nil {
 		s.log.Debugf("original file didn't change: %d bytes, last-modified: %s", newMetadata.Size, newMetadata.LastModified)
 		return nil
 	}
