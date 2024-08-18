@@ -6,6 +6,16 @@ import (
 	"fmt"
 )
 
+type Signature struct {
+	Certificates []string `json:"certificates"`
+
+	CorrectDigest    string `json:"correct_digest"`
+	CorrectDigest512 string `json:"correct_digest512"`
+
+	CorrectSignature    string `json:"correct_signature"`
+	CorrectSignature512 string `json:"correct_signature512"`
+}
+
 func (s Signature) GetCertificates() ([]*x509.Certificate, error) {
 	var (
 		err      error
