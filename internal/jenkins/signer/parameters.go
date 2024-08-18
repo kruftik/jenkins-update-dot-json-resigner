@@ -6,20 +6,22 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
+
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 )
 
-func (s *Service) parseSignerParameters(caPath, certPath, privPath, privEncPassword string) error {
+func (s *Service) parseSignerParameters(cfg config.SignerConfig) error {
 	var err error
 
-	if s.roots, err = s.parseCACertificates(caPath); err != nil {
+	if s.roots, err = s.parseCACertificates(cfg.CAPath); err != nil {
 		return fmt.Errorf("cannot parse CA certificats: %w", err)
 	}
 
-	if s.cert, err = s.parseCertificate(certPath); err != nil {
+	if s.cert, err = s.parseCertificate(cfg.CertificatePath); err != nil {
 		return fmt.Errorf("cannot parse certificate: %w", err)
 	}
 
-	if s.priv, err = s.parsePrivateKey(privPath, privEncPassword); err != nil {
+	if s.priv, err = s.parsePrivateKey(cfg.KeyPath, cfg.KeyPassword); err != nil {
 		return fmt.Errorf("cannot parse private key: %w", err)
 
 	}

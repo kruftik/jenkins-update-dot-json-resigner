@@ -5,6 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/types"
 )
 
@@ -22,12 +23,12 @@ type Service struct {
 	from, to string
 }
 
-func NewPatcher(log *zap.SugaredLogger, from, to string) Service {
+func NewPatcher(log *zap.SugaredLogger, cfg config.PatchConfig) Service {
 	return Service{
 		log: log,
 
-		from: from,
-		to:   to,
+		from: cfg.OriginDownloadURL,
+		to:   cfg.NewDownloadURL,
 	}
 }
 

@@ -5,15 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"go.uber.org/zap"
 
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins"
 )
 
 type Server struct {
 	log *zap.SugaredLogger
+
+	cfg config.ServerConfig
 
 	patchedFileProvider jenkins.PatchedFileRefresher
 
@@ -23,9 +27,10 @@ type Server struct {
 	srv *http.Server
 }
 
-func NewServer(log *zap.SugaredLogger, jsonFileProvider jenkins.PatchedFileRefresher, addr, dataDir, proxyToURL string) (Server, error) {
+func NewServer(log *zap.SugaredLogger, cfg config.ServerConfig, jsonFileProvider jenkins.PatchedFileRefresher, dataDir, proxyToURL string) (Server, error) {
 	s := Server{
 		log:                 log,
+		cfg:                 cfg,
 		patchedFileProvider: jsonFileProvider,
 		dataDir:             dataDir,
 		proxyToURL:          proxyToURL,
@@ -37,7 +42,7 @@ func NewServer(log *zap.SugaredLogger, jsonFileProvider jenkins.PatchedFileRefre
 	}
 
 	s.srv = &http.Server{
-		Addr:    addr,
+		Addr:    cfg.ListenAddr + ":" + strconv.Itoa(cfg.ListenPort),
 		Handler: handlers,
 	}
 
@@ -55,6 +60,15 @@ func (s Server) ListenAndServe(ctx context.Context) error {
 			s.log.Warnf("cannot gracefully shutdown http server: %v", err)
 		}
 	}(ctx)
+
+	if s.cfg.TLSCertPath != "" && s.cfg.TLSKeyPath != "" {
+		if err := s.srv.ListenAndServeTLS(s.cfg.TLSCertPath, s.cfg.TLSKeyPath); err != nil {
+			if !errors.Is(err, http.ErrServerClosed) {
+				return err
+			}
+		}
+		return nil
+	}
 
 	if err := s.srv.ListenAndServe(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {

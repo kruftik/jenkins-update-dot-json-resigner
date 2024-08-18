@@ -14,20 +14,20 @@ import (
 )
 
 var (
-	_ sourcefileproviders.SourceFileProvider = (*Cache)(nil)
+	_ sourcefileproviders.Provider = (*Cache)(nil)
 )
 
 type Cache struct {
 	log *zap.SugaredLogger
-	p   sourcefileproviders.SourceFileProvider
+	p   sourcefileproviders.Provider
 
 	dataFile string
-	metadata sourcefileproviders.JSONFileMetadata
+	metadata sourcefileproviders.FileMetadata
 
 	mu sync.RWMutex
 }
 
-func NewCacheWrapper(ctx context.Context, log *zap.SugaredLogger, p sourcefileproviders.SourceFileProvider, cacheDuration time.Duration) (*Cache, error) {
+func NewCacheWrapper(ctx context.Context, log *zap.SugaredLogger, p sourcefileproviders.Provider, cacheDuration time.Duration) (*Cache, error) {
 	fData, err := os.CreateTemp("", "cache-wrapper-*.data")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp data file: %w", err)
@@ -55,7 +55,7 @@ func (c *Cache) refreshContent(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	metadata, err := c.p.GetJSONPMetadata(ctx)
+	metadata, err := c.p.GetMetadata(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get JSONP metadata: %w", err)
 	}
@@ -65,7 +65,7 @@ func (c *Cache) refreshContent(ctx context.Context) error {
 		return nil
 	}
 
-	metadata, signedJSON, err := c.p.GetJSONPBody(ctx)
+	metadata, signedJSON, err := c.p.GetBody(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get JSONP body: %w", err)
 	}
@@ -116,18 +116,18 @@ FOR:
 	}
 }
 
-func (c *Cache) GetJSONPBody(ctx context.Context) (sourcefileproviders.JSONFileMetadata, io.ReadCloser, error) {
+func (c *Cache) GetBody(ctx context.Context) (sourcefileproviders.FileMetadata, io.ReadCloser, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	f, err := os.Open(c.dataFile)
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, fmt.Errorf("failed to open data file: %w", err)
+		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("failed to open data file: %w", err)
 	}
 
 	return c.metadata, f, nil
 }
 
-func (c *Cache) GetJSONPMetadata(ctx context.Context) (sourcefileproviders.JSONFileMetadata, error) {
+func (c *Cache) GetMetadata(ctx context.Context) (sourcefileproviders.FileMetadata, error) {
 	return c.metadata, nil
 }

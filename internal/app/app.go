@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -42,37 +41,40 @@ func App(ctx context.Context, version string) error {
 
 	log.Infof("Jenkins update.json ResignerService (v%s) starting up...", version)
 
-	var sourceFileProvider sourcefileproviders.SourceFileProvider
+	var sourceFileProvider sourcefileproviders.Provider
 
-	if cfg.UpdateJSONURL != "" {
-		sourceFileProvider, err = remoteurl.NewRemoteURLProvider(log, cfg.UpdateJSONURL)
+	if cfg.Source.URL != "" {
+		sourceFileProvider, err = remoteurl.NewRemoteURLProvider(log.With("component", "remote-url-provider"), cfg.Source.URL)
+
+		if cfg.UpdateJSONCacheTTL > 0 {
+			log.Infof("initializing caching wrapper (cache TTL = %s)", cfg.UpdateJSONCacheTTL)
+			sourceFileProvider, err = cache.NewCacheWrapper(ctx, log.With("component", "cache-wrapper"), sourceFileProvider, cfg.UpdateJSONCacheTTL)
+			if err != nil {
+				return fmt.Errorf("cannot initialize cache wrapper: %w", err)
+			}
+		}
 	} else {
-		sourceFileProvider, err = localfile.NewLocalFileProvider(cfg.UpdateJSONPath)
+		sourceFileProvider, err = localfile.NewLocalFileProvider(cfg.Source.Path)
 	}
 	if err != nil {
 		return fmt.Errorf("cannot initialize source file provider: %w", err)
 	}
 
-	sourceFileProvider, err = cache.NewCacheWrapper(ctx, log, sourceFileProvider, cfg.UpdateJSONCacheTTL)
-	if err != nil {
-		return fmt.Errorf("cannot initialize cache wrapper: %w", err)
-	}
-
-	signer, err := signer.NewSignerService(log, cfg.SignCAPath, cfg.SignCertificatePath, cfg.SignKeyPath, cfg.SignKeyPassword)
+	signer, err := signer.NewSignerService(log.With("component", "signer"), cfg.Signer)
 	if err != nil {
 		return fmt.Errorf("cannot initialize signer: %w", err)
 	}
 
 	patchers := []patcher.Patcher{
-		patcher.NewPatcher(log, cfg.OriginDownloadURL, cfg.NewDownloadURL),
+		patcher.NewPatcher(log.With("component", "patcher"), cfg.Patch),
 	}
 
-	juc, err := jenkins.NewJenkinsUpdateCenter(ctx, log, cfg, sourceFileProvider, signer, patchers)
+	juc, err := jenkins.NewJenkinsUpdateCenter(ctx, log.With("component", "juc"), cfg, sourceFileProvider, signer, patchers)
 	if err != nil {
 		return fmt.Errorf("cannot initialize jenkins update center: %w", err)
 	}
 
-	srv, err := server.NewServer(log, juc, cfg.ServerAddr+":"+strconv.Itoa(cfg.ServerPort), cfg.DataDirPath, cfg.NewDownloadURL)
+	srv, err := server.NewServer(log.With("component", "server"), cfg.Server, juc, cfg.DataDirPath, cfg.Patch.NewDownloadURL)
 	if err != nil {
 		return fmt.Errorf("cannot initialize server: %w", err)
 	}

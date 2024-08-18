@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type JSONFileMetadata struct {
+type FileMetadata struct {
 	LastModified time.Time
 	Size         int64
 	Etag         string

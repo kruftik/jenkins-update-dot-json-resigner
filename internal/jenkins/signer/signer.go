@@ -12,6 +12,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/types"
 )
 
@@ -20,19 +21,18 @@ var (
 )
 
 type Service struct {
-	log *zap.SugaredLogger
-
+	log   *zap.SugaredLogger
 	roots x509.CertPool
 	cert  *x509.Certificate
 	priv  *rsa.PrivateKey
 }
 
-func NewSignerService(log *zap.SugaredLogger, caPath, certPath, privPath, privEncPassword string) (*Service, error) {
+func NewSignerService(log *zap.SugaredLogger, cfg config.SignerConfig) (*Service, error) {
 	s := &Service{
 		log: log,
 	}
 
-	if err := s.parseSignerParameters(caPath, certPath, privPath, privEncPassword); err != nil {
+	if err := s.parseSignerParameters(cfg); err != nil {
 		return nil, fmt.Errorf("signer parameters are not valid: %w", err)
 	}
 

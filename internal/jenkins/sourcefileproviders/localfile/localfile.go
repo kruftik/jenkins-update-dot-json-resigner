@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ sourcefileproviders.SourceFileProvider = Provider{}
+	_ sourcefileproviders.Provider = Provider{}
 )
 
 type Provider struct {
@@ -41,36 +41,36 @@ func (p Provider) validate(src string) error {
 	return nil
 }
 
-func (p Provider) getMetadata(fi os.FileInfo) sourcefileproviders.JSONFileMetadata {
-	return sourcefileproviders.JSONFileMetadata{
+func (p Provider) getMetadata(fi os.FileInfo) sourcefileproviders.FileMetadata {
+	return sourcefileproviders.FileMetadata{
 		LastModified: fi.ModTime(),
 		Size:         fi.Size(),
 	}
 }
 
-func (p Provider) GetJSONPMetadata(_ context.Context) (sourcefileproviders.JSONFileMetadata, error) {
+func (p Provider) GetMetadata(_ context.Context) (sourcefileproviders.FileMetadata, error) {
 	fi, err := os.Stat(p.path)
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, err
+		return sourcefileproviders.FileMetadata{}, err
 	}
 
 	return p.getMetadata(fi), nil
 }
 
-func (p Provider) GetJSONPBody(_ context.Context) (sourcefileproviders.JSONFileMetadata, io.ReadCloser, error) {
+func (p Provider) GetBody(_ context.Context) (sourcefileproviders.FileMetadata, io.ReadCloser, error) {
 	f, err := os.Open(p.path)
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, fmt.Errorf("cannot open file: %w", err)
+		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot open file: %w", err)
 	}
 
 	fi, err := f.Stat()
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, fmt.Errorf("cannot stat file: %w", err)
+		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot stat file: %w", err)
 	}
 
 	r, err := sourcefileproviders.NewJSONPTrailersStrippingReader(f, fi.Size())
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, err
+		return sourcefileproviders.FileMetadata{}, nil, err
 	}
 
 	return p.getMetadata(fi), r, nil

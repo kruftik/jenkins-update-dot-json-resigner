@@ -22,7 +22,7 @@ var (
 )
 
 var (
-	_ sourcefileproviders.SourceFileProvider = (*Provider)(nil)
+	_ sourcefileproviders.Provider = (*Provider)(nil)
 )
 
 type Provider struct {
@@ -77,13 +77,13 @@ func (p *Provider) validate(src string) error {
 	return nil
 }
 
-func (p *Provider) getRemoteURLMetadata(r *http.Response) (sourcefileproviders.JSONFileMetadata, error) {
+func (p *Provider) getRemoteURLMetadata(r *http.Response) (sourcefileproviders.FileMetadata, error) {
 	dt, err := http.ParseTime(r.Header.Get("Last-Modified"))
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, errors.Wrapf(err, "%s is not valid datetime string", r.Header.Get("Last-Modified"))
+		return sourcefileproviders.FileMetadata{}, errors.Wrapf(err, "%s is not valid datetime string", r.Header.Get("Last-Modified"))
 	}
 
-	meta := sourcefileproviders.JSONFileMetadata{
+	meta := sourcefileproviders.FileMetadata{
 		LastModified: dt,
 		Size:         r.ContentLength,
 		Etag:         r.Header.Get("ETag"),
@@ -92,17 +92,17 @@ func (p *Provider) getRemoteURLMetadata(r *http.Response) (sourcefileproviders.J
 	return meta, nil
 }
 
-func (p *Provider) GetJSONPMetadata(ctx context.Context) (sourcefileproviders.JSONFileMetadata, error) {
+func (p *Provider) GetMetadata(ctx context.Context) (sourcefileproviders.FileMetadata, error) {
 	p.log.Debugf("HEAD %s...", p.url)
 
 	req, err := http.NewRequest(http.MethodHead, p.url, nil)
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, fmt.Errorf("cannot create request: %w", err)
+		return sourcefileproviders.FileMetadata{}, fmt.Errorf("cannot create request: %w", err)
 	}
 
 	resp, err := p.hc.Do(req.WithContext(ctx))
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, fmt.Errorf("cannot HEAD %s: %w", p.url, err)
+		return sourcefileproviders.FileMetadata{}, fmt.Errorf("cannot HEAD %s: %w", p.url, err)
 	}
 	defer func() {
 		err = resp.Body.Close()
@@ -114,12 +114,12 @@ func (p *Provider) GetJSONPMetadata(ctx context.Context) (sourcefileproviders.JS
 	return p.getRemoteURLMetadata(resp)
 }
 
-func (p *Provider) GetJSONPBody(ctx context.Context) (sourcefileproviders.JSONFileMetadata, io.ReadCloser, error) {
+func (p *Provider) GetBody(ctx context.Context) (sourcefileproviders.FileMetadata, io.ReadCloser, error) {
 	p.log.Debugf("GET %s...", p.url)
 
 	req, err := http.NewRequest(http.MethodGet, p.url, nil)
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, fmt.Errorf("cannot create request: %w", err)
+		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot create request: %w", err)
 	}
 
 	// We need content-length header in response
@@ -127,30 +127,30 @@ func (p *Provider) GetJSONPBody(ctx context.Context) (sourcefileproviders.JSONFi
 
 	resp, err := p.hc.Do(req.WithContext(ctx))
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, fmt.Errorf("cannot GET %s: %w", p.url, err)
+		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot GET %s: %w", p.url, err)
 	}
 	defer resp.Body.Close()
 
 	metadata, err := p.getRemoteURLMetadata(resp)
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, fmt.Errorf("failed to get remote URL metadata: %w", err)
+		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("failed to get remote URL metadata: %w", err)
 	}
 
 	f, err := os.CreateTemp("", "update-center-remote-url.*.jsonp")
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, fmt.Errorf("cannot create temporary file: %w", err)
+		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot create temporary file: %w", err)
 	}
 
 	p.log.Infof("%s temporary file created", f.Name())
 
 	length, err := io.Copy(f, resp.Body)
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, fmt.Errorf("cannot write body to temporary file: %w", err)
+		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot write body to temporary file: %w", err)
 	}
 
 	r, err := sourcefileproviders.NewJSONPTrailersStrippingReader(TempFileReadCloser{f}, length)
 	if err != nil {
-		return sourcefileproviders.JSONFileMetadata{}, nil, fmt.Errorf("failed to create JSONP trailer reader: %w", err)
+		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("failed to create JSONP trailer reader: %w", err)
 	}
 
 	return metadata, r, nil

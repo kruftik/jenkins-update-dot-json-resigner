@@ -28,20 +28,20 @@ var (
 type Service struct {
 	log                *zap.SugaredLogger
 	cfg                config.AppConfig
-	sourceFileProvider sourcefileproviders.SourceFileProvider
+	sourceFileProvider sourcefileproviders.Provider
 	signer             types.Signer
 	patchers           []patcher.Patcher
 
 	mu sync.Mutex
 
-	metadata sourcefileproviders.JSONFileMetadata
+	metadata sourcefileproviders.FileMetadata
 }
 
 func NewJenkinsUpdateCenter(
 	ctx context.Context,
 	log *zap.SugaredLogger,
 	cfg config.AppConfig,
-	sourceFileProvider sourcefileproviders.SourceFileProvider,
+	sourceFileProvider sourcefileproviders.Provider,
 	signer types.Signer,
 	patchers []patcher.Patcher,
 ) (*Service, error) {
@@ -62,18 +62,6 @@ func NewJenkinsUpdateCenter(
 
 func (s *Service) CleanUp(_ context.Context) error {
 	return nil
-
-	//if err := s.f.Close(); err != nil {
-	//	return fmt.Errorf("failed to close data file: %w", err)
-	//}
-	//
-	//if err := os.Remove(s.f.Name()); err != nil {
-	//	return fmt.Errorf("failed to remove data file: %w", err)
-	//}
-
-	//s.log.Infof("temporary file: %s removed", s.f.Name())
-
-	//return nil
 }
 
 func (s *Service) writeDataToFileWithTrailers(where string, data, prefix, suffix []byte) error {
@@ -97,7 +85,7 @@ func (s *Service) writeDataToFileWithTrailers(where string, data, prefix, suffix
 }
 
 func (s *Service) RefreshContent(ctx context.Context) error {
-	newMetadata, err := s.sourceFileProvider.GetJSONPMetadata(ctx)
+	newMetadata, err := s.sourceFileProvider.GetMetadata(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get JSONP metadata: %w", err)
 	}
