@@ -18,6 +18,9 @@ func TestCurrentUpdateJSON(t *testing.T) {
 		log       = logger.Sugar()
 	)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	defer cancel()
+
 	source := "https://updates.jenkins.io/current/update-center.json"
 
 	signer, err := signer.NewSignerService(log, config.SignerConfig{
@@ -33,11 +36,12 @@ func TestCurrentUpdateJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = NewJenkinsUpdateCenter(context.Background(), log, config.AppConfig{
+	juc := NewJenkinsUpdateCenter(log, config.AppConfig{
 		DataDirPath:               "/tmp",
 		UpdateJSONDownloadTimeout: 128 * time.Second,
 	}, p, signer, nil)
-	if err != nil {
+
+	if err := juc.RefreshContent(ctx); err != nil {
 		t.Fatal(err)
 	}
 
