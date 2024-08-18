@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -39,7 +40,7 @@ func NewSignerService(log *zap.SugaredLogger, cfg config.SignerConfig) (*Service
 	return s, nil
 }
 
-func (s *Service) GetSignature(unsigned types.Marshaler) (types.Signature, error) {
+func (s *Service) GetSignature(unsigned json.Marshaler) (types.Signature, error) {
 	var (
 		signature = JSONSignatureComponents{}
 		err       error
@@ -79,7 +80,7 @@ func (s *Service) isDigestsMatch(computedDigest []byte, providedDigest string) b
 	return false
 }
 
-func (s *Service) VerifySignature(unsigned types.Marshaler, signature types.Signature) error {
+func (s *Service) VerifySignature(unsigned json.Marshaler, signature types.Signature) error {
 	bytez, err := unsigned.MarshalJSON()
 	if err != nil {
 		return fmt.Errorf("cannot marshal unsigned JSON: %w", err)
