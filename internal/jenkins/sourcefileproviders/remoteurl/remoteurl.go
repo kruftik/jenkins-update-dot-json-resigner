@@ -93,7 +93,7 @@ func (p *Provider) getRemoteURLMetadata(r *http.Response) (sourcefileproviders.J
 }
 
 func (p *Provider) GetJSONPMetadata(ctx context.Context) (sourcefileproviders.JSONFileMetadata, error) {
-	p.log.Infof("HEAD %s...", p.url)
+	p.log.Debugf("HEAD %s...", p.url)
 
 	req, err := http.NewRequest(http.MethodHead, p.url, nil)
 	if err != nil {
@@ -115,7 +115,7 @@ func (p *Provider) GetJSONPMetadata(ctx context.Context) (sourcefileproviders.JS
 }
 
 func (p *Provider) GetJSONPBody(ctx context.Context) (sourcefileproviders.JSONFileMetadata, io.ReadCloser, error) {
-	p.log.Infof("GET %s...", p.url)
+	p.log.Debugf("GET %s...", p.url)
 
 	req, err := http.NewRequest(http.MethodGet, p.url, nil)
 	if err != nil {

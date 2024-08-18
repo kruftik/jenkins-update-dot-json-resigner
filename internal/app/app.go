@@ -12,6 +12,7 @@ import (
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/patcher"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/signer"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders/cache"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders/localfile"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders/remoteurl"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/server"
@@ -50,6 +51,11 @@ func App(ctx context.Context, version string) error {
 	}
 	if err != nil {
 		return fmt.Errorf("cannot initialize source file provider: %w", err)
+	}
+
+	sourceFileProvider, err = cache.NewCacheWrapper(ctx, log, sourceFileProvider, cfg.UpdateJSONCacheTTL)
+	if err != nil {
+		return fmt.Errorf("cannot initialize cache wrapper: %w", err)
 	}
 
 	signer, err := signer.NewSignerService(log, cfg.SignCAPath, cfg.SignCertificatePath, cfg.SignKeyPath, cfg.SignKeyPassword)
