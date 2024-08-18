@@ -11,19 +11,12 @@ on:
 
 jobs:
   master-build:
-    #    name: build the app and image
     runs-on: ubuntu-latest
 
     env:
       DOCKER_IMAGE: kruft/jenkins-update-dot-json-resigner
 
     steps:
-#      - name: Set up Go 1.15
-#        uses: actions/setup-go@v2
-#        with:
-#          go-version: ^1.15
-#        id: go
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
 
