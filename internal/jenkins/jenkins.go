@@ -14,6 +14,7 @@ import (
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/types"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/json"
 )
 
 type PatchedFileRefresher interface {
@@ -67,20 +68,14 @@ func (s *Service) CleanUp(_ context.Context) error {
 	return nil
 }
 
-func (s *Service) writeDataToFileWithTrailers(where string, data, prefix, suffix []byte) error {
-	f, err := os.Create(where)
-	if err != nil {
-		return fmt.Errorf("cannot create file: %w", err)
-	}
-	defer f.Close()
-
+func (s *Service) writeDataWithTrailers(w io.Writer, data io.Reader, prefix, suffix []byte) error {
 	r := io.MultiReader(
 		bytes.NewReader(prefix),
-		bytes.NewReader(data),
+		data,
 		bytes.NewReader(suffix),
 	)
 
-	if _, err := io.Copy(f, r); err != nil {
+	if _, err := io.Copy(w, r); err != nil {
 		return fmt.Errorf("cannot write to file: %w", err)
 	}
 
@@ -93,8 +88,11 @@ func (s *Service) RefreshContent(ctx context.Context) error {
 		return fmt.Errorf("failed to get JSONP metadata: %w", err)
 	}
 
-	_, err1 := os.Stat(path.Join(s.cfg.DataDirPath, UpdateCenterDotJSON))
-	_, err2 := os.Stat(path.Join(s.cfg.DataDirPath, UpdateCenterDotHTML))
+	jsonpFile := path.Join(s.cfg.DataDirPath, UpdateCenterDotJSON)
+	htmlFile := path.Join(s.cfg.DataDirPath, UpdateCenterDotHTML)
+
+	_, err1 := os.Stat(jsonpFile)
+	_, err2 := os.Stat(htmlFile)
 
 	if err1 != nil || err2 != nil {
 		s.log.Info("temp file(s) do not exist, force update")
@@ -115,26 +113,42 @@ func (s *Service) RefreshContent(ctx context.Context) error {
 		return err
 	}
 
+	if err := s.signer.VerifySignature(signedJSON.GetUnsigned(), signedJSON.Signature); err != nil {
+		return fmt.Errorf("cannot verify original file signature: %w", err)
+	}
+
 	if err := s.patchAndSign(signedJSON); err != nil {
 		return fmt.Errorf("cannot patch and sign file: %w", err)
 	}
 
-	bytez, err := signedJSON.MarshalJSON()
+	bytez, err := json.MarshalJSON(signedJSON)
 	if err != nil {
 		return fmt.Errorf("failed to write patched content to buffer: %w", err)
 	}
 
-	if err := s.writeDataToFileWithTrailers(path.Join(s.cfg.DataDirPath, UpdateCenterDotJSON), bytez, sourcefileproviders.WrappedJSONPPrefix, sourcefileproviders.WrappedJSONPSuffix); err != nil {
-		return fmt.Errorf("cannot write update-center.json: %w", err)
+	f, err := os.Create(jsonpFile)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %w", jsonpFile, err)
+	}
+	defer f.Close()
+
+	if err := s.writeDataWithTrailers(f, bytes.NewReader(bytez), sourcefileproviders.WrappedJSONPPrefix, sourcefileproviders.WrappedJSONPSuffix); err != nil {
+		return fmt.Errorf("cannot write %s: %w", jsonpFile, err)
 	}
 
-	s.log.Debugf("%s file saved", path.Join(s.cfg.DataDirPath, UpdateCenterDotJSON))
+	s.log.Debugf("%s file saved", jsonpFile)
 
-	if err := s.writeDataToFileWithTrailers(path.Join(s.cfg.DataDirPath, UpdateCenterDotHTML), bytez, sourcefileproviders.WrappedHTMLPrefix, sourcefileproviders.WrappedHTMLSuffix); err != nil {
-		return fmt.Errorf("cannot write update-center.json.html: %w", err)
+	f, err = os.Create(htmlFile)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %w", htmlFile, err)
+	}
+	defer f.Close()
+
+	if err := s.writeDataWithTrailers(f, bytes.NewReader(bytez), sourcefileproviders.WrappedHTMLPrefix, sourcefileproviders.WrappedHTMLSuffix); err != nil {
+		return fmt.Errorf("cannot write %s: %w", htmlFile, err)
 	}
 
-	s.log.Debugf("%s file saved", path.Join(s.cfg.DataDirPath, UpdateCenterDotHTML))
+	s.log.Debugf("%s file saved", htmlFile)
 
 	s.metadata = newMetadata
 

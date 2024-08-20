@@ -4,13 +4,12 @@ services:
   jenkins:
     image: jenkins/jenkins:latest
     volumes:
-      - ./jenkins_home:/var/jenkins_home
-      - ./cert/java-cacerts:/opt/java/openjdk/lib/security/cacerts
+      - ./jenkins/hudson.model.UpdateCenter.xml:/var/jenkins_home/hudson.model.UpdateCenter.xml
+      - ./cert/your-update-center.crt:/var/jenkins_home/update-center-rootCAs/your-update-center.crt
     ports:
       - "8080:8080"
     environment:
       JAVA_OPTS: -Xms1g -Xmx1g
-
 
   update-json-resigner:
 #    image: kruft/jenkins-update-dot-json-resigner:1.0
@@ -23,9 +22,9 @@ services:
 
       LISTEN_PORT: 8282
 
-#      LISTEN_PORT: 8443
-#      TLS_CERT_PATH: "/cert/your-update-center.crt"
-#      TLS_KEY_PATH: "/cert/your-update-center.key"
+      # LISTEN_PORT: 8443
+      # TLS_CERT_PATH: "/cert/your-update-center.crt"
+      # TLS_KEY_PATH: "/cert/your-update-center.key"
 
       UPDATE_JSON_URL: https://updates.jenkins.io/update-center.json
 

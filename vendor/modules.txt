@@ -1,23 +1,15 @@
-# github.com/gibson042/canonicaljson-go v1.0.3
-## explicit
-github.com/gibson042/canonicaljson-go
 # github.com/go-chi/chi v4.1.2+incompatible
 ## explicit
 github.com/go-chi/chi
 github.com/go-chi/chi/middleware
+# github.com/go-json-experiment/json v0.0.0-20240815175050-ebd3a8989ca1
+## explicit; go 1.23
 # github.com/jessevdk/go-flags v1.6.1
 ## explicit; go 1.20
 github.com/jessevdk/go-flags
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/stretchr/testify v1.8.1
-## explicit; go 1.13
-# github.com/treastech/logger v0.0.0-20180705232552-e381e9ecf2e3
-## explicit
-github.com/treastech/logger
-# go.uber.org/atomic v1.11.0
-## explicit; go 1.18
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
@@ -37,3 +29,6 @@ go.uber.org/zap/zapcore
 # golang.org/x/sys v0.24.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
+# olympos.io/encoding/cjson v0.0.0-20191103175252-b41f647ea928
+## explicit; go 1.13
+olympos.io/encoding/cjson
