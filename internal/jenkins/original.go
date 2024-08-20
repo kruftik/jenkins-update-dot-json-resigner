@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Service) getOriginal(ctx context.Context) (sourcefileproviders.FileMetadata, *types.SignedUpdateJSON, error) {
-	ctx, cancel := context.WithTimeout(ctx, s.cfg.UpdateJSONDownloadTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.cfg.GetUpdateJSONBodyTimeout)
 	defer cancel()
 
 	metadata, r, err := s.sourceFileProvider.GetBody(ctx)
@@ -24,12 +24,6 @@ func (s *Service) getOriginal(ctx context.Context) (sourcefileproviders.FileMeta
 	if err := json.NewDecoder(r).Decode(signedJSON); err != nil {
 		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot unmarshal json: %w", err)
 	}
-
-	if err := s.signer.VerifySignature(signedJSON.GetUnsigned(), signedJSON.Signature); err != nil {
-		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot verify original file signature: %w", err)
-	}
-
-	s.log.Debug("original file signature verified")
 
 	return metadata, signedJSON, nil
 }

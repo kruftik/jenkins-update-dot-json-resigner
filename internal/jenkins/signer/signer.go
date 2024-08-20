@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -15,6 +14,7 @@ import (
 
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/types"
+	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/json"
 )
 
 var (
@@ -40,13 +40,13 @@ func NewSignerService(log *zap.SugaredLogger, cfg config.SignerConfig) (*Service
 	return s, nil
 }
 
-func (s *Service) GetSignature(unsigned json.Marshaler) (types.Signature, error) {
+func (s *Service) GetSignature(unsigned *types.InsecureUpdateJSON) (types.Signature, error) {
 	var (
 		signature = JSONSignatureComponents{}
 		err       error
 	)
 
-	bytez, err := unsigned.MarshalJSON()
+	bytez, err := json.MarshalJSON(unsigned)
 	if err != nil {
 		return types.Signature{}, fmt.Errorf("cannot marshal unsigned JSON: %w", err)
 	}
@@ -80,8 +80,8 @@ func (s *Service) isDigestsMatch(computedDigest []byte, providedDigest string) b
 	return false
 }
 
-func (s *Service) VerifySignature(unsigned json.Marshaler, signature types.Signature) error {
-	bytez, err := unsigned.MarshalJSON()
+func (s *Service) VerifySignature(unsigned *types.InsecureUpdateJSON, signature types.Signature) error {
+	bytez, err := json.MarshalJSON(unsigned)
 	if err != nil {
 		return fmt.Errorf("cannot marshal unsigned JSON: %w", err)
 	}
