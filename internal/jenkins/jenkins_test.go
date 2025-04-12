@@ -25,8 +25,6 @@ func TestCurrentUpdateJSON(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 
-	source := "https://updates.jenkins.io/current/update-center.json"
-
 	signer, err := signer.NewSignerService(log, config.SignerConfig{
 		CertificatePath: "../../testdata/certs/test.crt",
 		KeyPath:         "../../testdata/certs/test.key",
@@ -35,6 +33,7 @@ func TestCurrentUpdateJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	source := "https://updates.jenkins.io/current/update-center.json"
 	p, err := remoteurl.NewRemoteURLProvider(log, source)
 	if err != nil {
 		t.Fatal(err)
@@ -72,9 +71,8 @@ func TestSignedUpdateJSON_MarshalJSON(t *testing.T) {
 	}
 	defer r.Close()
 
-	var originalFile bytes.Buffer
-
-	if _, err := io.Copy(&originalFile, r); err != nil {
+	originalFileBytes, err := io.ReadAll(r)
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -88,12 +86,12 @@ func TestSignedUpdateJSON_MarshalJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bytez, err := json.MarshalJSON(signedJSON)
+	marshaledFileBytes, err := json.MarshalJSON(signedJSON)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !bytes.Equal(originalFile.Bytes(), bytez) {
+	if !bytes.Equal(originalFileBytes, marshaledFileBytes) {
 		t.Fatalf("original and re-marshaled files do not match")
 	}
 }
