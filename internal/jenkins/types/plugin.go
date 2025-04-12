@@ -37,6 +37,7 @@ type Plugin struct {
 	Developers             []Developers             `json:"developers"`
 	Excerpt                string                   `json:"excerpt"`
 	Gav                    string                   `json:"gav"`
+	HealthScore            *int                     `json:"healthScore,omitempty"`
 	IssueTrackers          *PluginIssueTrackersList `json:"issueTrackers,omitempty"`
 	Labels                 []string                 `json:"labels"`
 	//MinimumJavaVersion     string               `json:"minimumJavaVersion,omitempty"`

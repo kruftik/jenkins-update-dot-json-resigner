@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	l "github.com/treastech/logger"
+	"go.uber.org/zap"
 
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins"
 )
@@ -19,6 +19,29 @@ import (
 const (
 	timeoutTotal = 15 * time.Second
 )
+
+func (s Server) loggerMiddleware(next http.Handler) http.Handler {
+	l := s.log.Desugar()
+
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+
+		t1 := time.Now()
+		defer func() {
+			l.Info("Served",
+				zap.String("proto", r.Proto),
+				zap.String("method", r.Method),
+				zap.String("path", r.URL.Path),
+				zap.Duration("lat", time.Since(t1)),
+				zap.Int("status", ww.Status()),
+				zap.Int("size", ww.BytesWritten()),
+				zap.String("reqId", middleware.GetReqID(r.Context())))
+		}()
+
+		next.ServeHTTP(ww, r)
+	}
+	return http.HandlerFunc(fn)
+}
 
 func (s Server) httpProxy(proxyToURL string) (*httputil.ReverseProxy, error) {
 	originURL, err := url.ParseRequestURI(proxyToURL)
@@ -88,9 +111,8 @@ func (s Server) getHandlers() (*chi.Mux, error) {
 
 	r.Use(middleware.Heartbeat("/healthz"))
 
-	r.Use(l.Logger(s.log.Desugar()))
+	r.Use(s.loggerMiddleware)
 
-	// Регистрация pprof-обработчиков
 	r.HandleFunc("/debug/pprof/", pprof.Index)
 	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	r.HandleFunc("/debug/pprof/profile", pprof.Profile)

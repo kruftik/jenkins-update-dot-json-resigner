@@ -14,4 +14,9 @@ The sole function of the service is patch update-center.json to override the Jen
 locations and to sign the patched file with a private key that is either issued by a corporate CA or with a 
 self-signed one.
 
- 
+
+## Jenkins configuration
+
+* create `${JENKINS_HOME}/update-center-rootCAs` directory (if not exists)
+* place signing certificate to `${JENKINS_HOME}/update-center-rootCAs` directory ()
+* restart Jenkins server
