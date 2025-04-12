@@ -9,7 +9,7 @@ import (
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/types"
 )
 
-func (s *Service) getOriginal(ctx context.Context) (sourcefileproviders.FileMetadata, *types.SignedUpdateJSON, error) {
+func (s *Service) GetOriginal(ctx context.Context) (sourcefileproviders.FileMetadata, *types.SignedUpdateJSON, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.cfg.GetUpdateJSONBodyTimeout)
 	defer cancel()
 

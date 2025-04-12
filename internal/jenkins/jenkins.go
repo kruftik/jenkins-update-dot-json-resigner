@@ -14,7 +14,6 @@ import (
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/config"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/sourcefileproviders"
 	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/jenkins/types"
-	"github.com/kruftik/jenkins-update-dot-json-resigner/internal/json"
 )
 
 type PatchedFileRefresher interface {
@@ -108,7 +107,7 @@ func (s *Service) RefreshContent(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	newMetadata, signedJSON, err := s.getOriginal(ctx)
+	newMetadata, signedJSON, err := s.GetOriginal(ctx)
 	if err != nil {
 		return err
 	}
@@ -121,7 +120,7 @@ func (s *Service) RefreshContent(ctx context.Context) error {
 		return fmt.Errorf("cannot patch and sign file: %w", err)
 	}
 
-	bytez, err := json.MarshalJSON(signedJSON)
+	bytez, err := signedJSON.MarshalJSON()
 	if err != nil {
 		return fmt.Errorf("failed to write patched content to buffer: %w", err)
 	}
