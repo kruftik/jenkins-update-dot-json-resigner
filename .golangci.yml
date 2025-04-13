@@ -41,7 +41,7 @@ linters:
     misspell:
       locale: US
   exclusions:
-    generated: lafx
+    generated: lax
     rules:
       - linters:
           - staticcheck
