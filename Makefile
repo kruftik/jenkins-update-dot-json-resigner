@@ -23,7 +23,7 @@ gen-test-cert:
 	    -subj "/CN=YourJenkinsUpdateCenter"
 
 test:
-	go test ./...
+	go test ./... -count=1
 
 build:
 	go build -o app -v ./cmd
