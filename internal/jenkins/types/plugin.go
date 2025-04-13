@@ -7,9 +7,9 @@ import (
 type Plugins map[string]Plugin
 
 type PluginIssueTracker struct {
-	ReportUrl string `json:"reportUrl,omitempty"`
+	ReportURL string `json:"reportUrl,omitempty"`
 	Type      string `json:"type,omitempty"`
-	ViewUrl   string `json:"viewUrl,omitempty"`
+	ViewURL   string `json:"viewUrl,omitempty"`
 }
 
 type PluginIssueTrackersList struct {
@@ -41,7 +41,7 @@ type Plugin struct {
 	HealthScore            *int                     `json:"healthScore,omitempty"`
 	IssueTrackers          *PluginIssueTrackersList `json:"issueTrackers,omitempty"`
 	Labels                 []string                 `json:"labels"`
-	//MinimumJavaVersion     string               `json:"minimumJavaVersion,omitempty"`
+	// MinimumJavaVersion     string               `json:"minimumJavaVersion,omitempty"`
 	Name              string `json:"name"`
 	Popularity        int    `json:"popularity"`
 	PreviousTimestamp string `json:"previousTimestamp,omitempty"`

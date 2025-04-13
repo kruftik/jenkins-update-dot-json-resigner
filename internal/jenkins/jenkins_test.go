@@ -21,7 +21,7 @@ func TestCurrentUpdateJSON(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 
-	signer, err := signer.NewSignerService(log, config.SignerConfig{
+	signerSvc, err := signer.NewSignerService(log, config.SignerConfig{
 		CertificatePath: "../../testdata/certs/test.crt",
 		KeyPath:         "../../testdata/certs/test.key",
 	})
@@ -38,7 +38,7 @@ func TestCurrentUpdateJSON(t *testing.T) {
 	juc := NewJenkinsUpdateCenter(log, config.AppConfig{
 		DataDirPath:              "/tmp",
 		GetUpdateJSONBodyTimeout: 128 * time.Second,
-	}, p, signer, nil)
+	}, p, signerSvc, nil)
 
 	if err := juc.RefreshContent(ctx); err != nil {
 		t.Fatal(err)

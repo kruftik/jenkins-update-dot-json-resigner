@@ -153,11 +153,11 @@ func (s Server) getHandlers() (*chi.Mux, error) {
 			r.Head("/"+jenkins.UpdateCenterDotHTML, fsHandler.ServeHTTP)
 		})
 
-		r.Get("/updates/hudson.tasks.*", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/updates/hudson.tasks.*", func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 		})
 
-		r.Get("/updates/hudson.tools.*", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/updates/hudson.tools.*", func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 		})
 	})

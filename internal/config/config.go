@@ -78,7 +78,7 @@ func ParseConfig() (AppConfig, error) {
 		return AppConfig{}, fmt.Errorf("invalid source: %w", err)
 	}
 
-	if err := os.MkdirAll(cfg.DataDirPath, 0755); err != nil {
+	if err := os.MkdirAll(cfg.DataDirPath, 0o750); err != nil {
 		return AppConfig{}, fmt.Errorf("failed to create temp directory: %w", err)
 	}
 

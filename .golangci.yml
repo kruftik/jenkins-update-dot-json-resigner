@@ -28,6 +28,7 @@ linters:
         - rangeValCopy
         - singleCaseSwitch
         - ifElseChain
+        - whyNoLint
       enabled-tags:
         - performance
         - style
@@ -40,7 +41,7 @@ linters:
     misspell:
       locale: US
   exclusions:
-    generated: lax
+    generated: lafx
     rules:
       - linters:
           - staticcheck
@@ -50,7 +51,7 @@ linters:
         text: should have a package comment
       - linters:
           - revive
-        text: should have comment or be unexported
+        text: should have comment
       - linters:
           - dupl
           - gosec
@@ -61,6 +62,9 @@ linters:
           - unused
         path: _test\.go$
         text: unused-parameter
+      - linters:
+          - govet
+        text: declaration of "err" shadows declaration
     paths:
       - vendor
       - third_party$
