@@ -29,6 +29,11 @@ jobs:
       - name: Test with the Go CLI
         run: go test -v ./...
 
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.1
+
       - name: Prepare
         id: prep
         run: |
