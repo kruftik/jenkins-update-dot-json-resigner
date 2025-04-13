@@ -1,7 +1,14 @@
 package types
 
 import (
+	"encoding/json"
+
 	"olympos.io/encoding/cjson"
+)
+
+var (
+	_ json.Marshaler = (*InsecureUpdateJSON)(nil)
+	_ json.Marshaler = (*SignedUpdateJSON)(nil)
 )
 
 func (o *InsecureUpdateJSON) MarshalJSON() ([]byte, error) {

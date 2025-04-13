@@ -1,6 +1,8 @@
 module github.com/kruftik/jenkins-update-dot-json-resigner
 
-go 1.23
+go 1.24.0
+
+toolchain go1.24.1
 
 require (
 	github.com/go-chi/chi v4.1.2+incompatible
@@ -12,6 +14,6 @@ require (
 
 require (
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 )
