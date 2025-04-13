@@ -60,7 +60,7 @@ func App(ctx context.Context, version string) error {
 		return fmt.Errorf("cannot initialize source file provider: %w", err)
 	}
 
-	signer, err := signer.NewSignerService(log.With("component", "signer"), cfg.Signer)
+	signerSvc, err := signer.NewSignerService(log.With("component", "signer"), cfg.Signer)
 	if err != nil {
 		return fmt.Errorf("cannot initialize signer: %w", err)
 	}
@@ -69,7 +69,7 @@ func App(ctx context.Context, version string) error {
 		patcher.NewPatcher(log.With("component", "patcher"), cfg.Patch),
 	}
 
-	juc := jenkins.NewJenkinsUpdateCenter(log.With("component", "juc"), cfg, sourceFileProvider, signer, patchers)
+	juc := jenkins.NewJenkinsUpdateCenter(log.With("component", "juc"), cfg, sourceFileProvider, signerSvc, patchers)
 
 	if err := juc.RefreshContent(ctx); err != nil {
 		return fmt.Errorf("cannot refresh content: %w", err)

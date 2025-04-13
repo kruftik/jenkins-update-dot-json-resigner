@@ -32,7 +32,7 @@ func (sc JSONSignatureComponents) GetSignature1() string {
 	return base64.StdEncoding.EncodeToString(sc.signature1)
 }
 
-func (sc JSONSignatureComponents) GetCertificates(roots x509.CertPool, cert *x509.Certificate) []string {
+func (sc JSONSignatureComponents) GetCertificates(_ x509.CertPool, cert *x509.Certificate) []string {
 	return []string{base64.StdEncoding.EncodeToString(cert.Raw)}
 }
 

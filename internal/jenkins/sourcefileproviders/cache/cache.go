@@ -121,7 +121,7 @@ FOR:
 	}
 }
 
-func (c *Cache) GetBody(ctx context.Context) (sourcefileproviders.FileMetadata, io.ReadCloser, error) {
+func (c *Cache) GetBody(_ context.Context) (sourcefileproviders.FileMetadata, io.ReadCloser, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -133,6 +133,6 @@ func (c *Cache) GetBody(ctx context.Context) (sourcefileproviders.FileMetadata, 
 	return c.metadata, f, nil
 }
 
-func (c *Cache) GetMetadata(ctx context.Context) (sourcefileproviders.FileMetadata, error) {
+func (c *Cache) GetMetadata(_ context.Context) (sourcefileproviders.FileMetadata, error) {
 	return c.metadata, nil
 }

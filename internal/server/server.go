@@ -42,8 +42,9 @@ func NewServer(log *zap.SugaredLogger, cfg config.ServerConfig, jsonFileProvider
 	}
 
 	s.srv = &http.Server{
-		Addr:    cfg.ListenAddr + ":" + strconv.Itoa(cfg.ListenPort),
-		Handler: handlers,
+		Addr:              cfg.ListenAddr + ":" + strconv.Itoa(cfg.ListenPort),
+		Handler:           handlers,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	return s, nil

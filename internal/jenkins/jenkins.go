@@ -125,7 +125,7 @@ func (s *Service) RefreshContent(ctx context.Context) error {
 		return fmt.Errorf("failed to write patched content to buffer: %w", err)
 	}
 
-	f, err := os.Create(jsonpFile)
+	f, err := os.Create(jsonpFile) //nolint:gosec
 	if err != nil {
 		return fmt.Errorf("failed to create file %s: %w", jsonpFile, err)
 	}
@@ -137,7 +137,7 @@ func (s *Service) RefreshContent(ctx context.Context) error {
 
 	s.log.Debugf("%s file saved", jsonpFile)
 
-	f, err = os.Create(htmlFile)
+	f, err = os.Create(htmlFile) //nolint:gosec
 	if err != nil {
 		return fmt.Errorf("failed to create file %s: %w", htmlFile, err)
 	}

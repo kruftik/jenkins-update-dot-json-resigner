@@ -38,10 +38,10 @@ func NewRemoteURLProvider(log *zap.SugaredLogger, sURL string) (*Provider, error
 
 	p.hc = &http.Client{
 		// TODO: something goes wrong with this settings
-		//Transport: &http.Transport{
-		//	MaxIdleConns:    MaxIdleConns,
-		//	IdleConnTimeout: IdleConnTimeout * time.Second,
-		//},
+		// Transport: &http.Transport{
+		//   MaxIdleConns:    MaxIdleConns,
+		//	 IdleConnTimeout: IdleConnTimeout * time.Second,
+		// },
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			p.log.Debugf("%s %s: redirected to %s", req.Method, via[0].URL.String(), req.URL.String())
 			return nil
@@ -56,7 +56,7 @@ func NewRemoteURLProvider(log *zap.SugaredLogger, sURL string) (*Provider, error
 }
 
 func (p *Provider) validate(src string) error {
-	resp, err := http.Head(src)
+	resp, err := http.Head(src) //nolint:gosec
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (p *Provider) getRemoteURLMetadata(r *http.Response) (sourcefileproviders.F
 func (p *Provider) GetMetadata(ctx context.Context) (sourcefileproviders.FileMetadata, error) {
 	p.log.Debugf("HEAD %s...", p.url)
 
-	req, err := http.NewRequest(http.MethodHead, p.url, nil)
+	req, err := http.NewRequest(http.MethodHead, p.url, http.NoBody)
 	if err != nil {
 		return sourcefileproviders.FileMetadata{}, fmt.Errorf("cannot create request: %w", err)
 	}
@@ -109,7 +109,7 @@ func (p *Provider) GetMetadata(ctx context.Context) (sourcefileproviders.FileMet
 func (p *Provider) GetBody(ctx context.Context) (sourcefileproviders.FileMetadata, io.ReadCloser, error) {
 	p.log.Debugf("GET %s...", p.url)
 
-	req, err := http.NewRequest(http.MethodGet, p.url, nil)
+	req, err := http.NewRequest(http.MethodGet, p.url, http.NoBody)
 	if err != nil {
 		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot create request: %w", err)
 	}
