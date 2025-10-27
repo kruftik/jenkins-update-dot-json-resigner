@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,6 +19,6 @@ func main() {
 	defer cancel()
 
 	if err := app.App(ctx, GitCommit); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
