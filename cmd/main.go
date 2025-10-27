@@ -19,6 +19,7 @@ func main() {
 	defer cancel()
 
 	if err := app.App(ctx, GitCommit); err != nil {
+		cancel()
 		log.Fatal(err)
 	}
 }
