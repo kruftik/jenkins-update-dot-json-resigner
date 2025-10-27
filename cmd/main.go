@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,9 +16,11 @@ var (
 
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancel()
 
 	if err := app.App(ctx, GitCommit); err != nil {
-		panic(err)
+		cancel()
+		log.Fatal(err)
 	}
+
+	cancel()
 }

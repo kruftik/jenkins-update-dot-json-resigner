@@ -56,7 +56,7 @@ func NewRemoteURLProvider(log *zap.SugaredLogger, sURL string) (*Provider, error
 }
 
 func (p *Provider) validate(src string) error {
-	resp, err := http.Head(src) //nolint:gosec
+	resp, err := p.hc.Head(src) //nolint:gosec
 	if err != nil {
 		return err
 	}
@@ -87,12 +87,12 @@ func (p *Provider) getRemoteURLMetadata(r *http.Response) (sourcefileproviders.F
 func (p *Provider) GetMetadata(ctx context.Context) (sourcefileproviders.FileMetadata, error) {
 	p.log.Debugf("HEAD %s...", p.url)
 
-	req, err := http.NewRequest(http.MethodHead, p.url, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, p.url, http.NoBody)
 	if err != nil {
 		return sourcefileproviders.FileMetadata{}, fmt.Errorf("cannot create request: %w", err)
 	}
 
-	resp, err := p.hc.Do(req.WithContext(ctx))
+	resp, err := p.hc.Do(req)
 	if err != nil {
 		return sourcefileproviders.FileMetadata{}, fmt.Errorf("cannot HEAD %s: %w", p.url, err)
 	}
@@ -109,7 +109,7 @@ func (p *Provider) GetMetadata(ctx context.Context) (sourcefileproviders.FileMet
 func (p *Provider) GetBody(ctx context.Context) (sourcefileproviders.FileMetadata, io.ReadCloser, error) {
 	p.log.Debugf("GET %s...", p.url)
 
-	req, err := http.NewRequest(http.MethodGet, p.url, http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.url, http.NoBody)
 	if err != nil {
 		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot create request: %w", err)
 	}
@@ -117,7 +117,7 @@ func (p *Provider) GetBody(ctx context.Context) (sourcefileproviders.FileMetadat
 	// We need content-length header in response
 	req.Header.Set("Accept-Encoding", "identity")
 
-	resp, err := p.hc.Do(req.WithContext(ctx))
+	resp, err := p.hc.Do(req)
 	if err != nil {
 		return sourcefileproviders.FileMetadata{}, nil, fmt.Errorf("cannot GET %s: %w", p.url, err)
 	}

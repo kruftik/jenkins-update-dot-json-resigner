@@ -45,6 +45,9 @@ func App(ctx context.Context, version string) error {
 
 	if cfg.Source.URL != "" {
 		sourceFileProvider, err = remoteurl.NewRemoteURLProvider(log.With("component", "remote-url-provider"), cfg.Source.URL)
+		if err != nil {
+			return fmt.Errorf("cannot initialize source file provider: %w", err)
+		}
 
 		if cfg.UpdateJSONCacheTTL > 0 {
 			log.Infof("initializing caching wrapper (cache TTL = %s)", cfg.UpdateJSONCacheTTL)
@@ -55,9 +58,9 @@ func App(ctx context.Context, version string) error {
 		}
 	} else {
 		sourceFileProvider, err = localfile.NewLocalFileProvider(cfg.Source.Path)
-	}
-	if err != nil {
-		return fmt.Errorf("cannot initialize source file provider: %w", err)
+		if err != nil {
+			return fmt.Errorf("cannot initialize source file provider: %w", err)
+		}
 	}
 
 	signerSvc, err := signer.NewSignerService(log.With("component", "signer"), cfg.Signer)
