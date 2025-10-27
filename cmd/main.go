@@ -16,10 +16,11 @@ var (
 
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancel()
 
 	if err := app.App(ctx, GitCommit); err != nil {
 		cancel()
 		log.Fatal(err)
 	}
+
+	cancel()
 }

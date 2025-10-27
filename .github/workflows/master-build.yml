@@ -3,7 +3,8 @@ name: Prepare and Push Container Image
 on:
   push:
     branches:
-      - '**'
+      - 'master'
+      - "hotfix/**"
     tags:
       - 'v*.*'
   pull_request:
